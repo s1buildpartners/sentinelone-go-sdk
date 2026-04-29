@@ -1,0 +1,10 @@
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# build/test artifacts
+cover.out
+coverage
+
+# secrets
+.env
