@@ -42,7 +42,7 @@ var (
 var userConfigDirFn = os.UserConfigDir
 
 // LoadOption is a sealed option accepted by [NewClientFromConfig] and
-// [NewClientFromProfile].  Both [ClientOption] and [ConfigOption] satisfy it.
+// [NewDefaultClient].  Both [ClientOption] and [ConfigOption] satisfy it.
 //
 // The unexported marker method prevents external types from satisfying the
 // interface, keeping the option set closed to this package.
@@ -60,7 +60,7 @@ type credentialConfig struct {
 // ConfigOption configures credential-loading behaviour such as the profile
 // name and credentials file path.  It satisfies [LoadOption] and can be
 // mixed with [ClientOption] values in [NewClientFromConfig] and
-// [NewClientFromProfile].
+// [NewDefaultClient].
 type ConfigOption func(*credentialConfig)
 
 func (ConfigOption) applyLoadOption() {}
@@ -80,7 +80,7 @@ func WithConfigFile(path string) ConfigOption {
 }
 
 // Profile holds the base URL and API token for a named SentinelOne management
-// tenant.  Values are populated by [NewClientFromConfig] or [NewClientFromProfile].
+// tenant.  Values are populated by [NewClientFromConfig] or [NewDefaultClient].
 type Profile struct {
 	URL   string
 	Token string
@@ -163,7 +163,7 @@ func NewClientFromConfig(opts ...LoadOption) (*Client, error) {
 	return NewClient(prof.URL, prof.Token, clientOpts...), nil
 }
 
-// NewClientFromProfile creates a Client using a layered credential lookup.
+// NewDefaultClient creates a Client using a layered credential lookup.
 //
 // Priority order:
 //  1. [EnvURL] and [EnvToken] environment variables — if both are set they
@@ -180,7 +180,7 @@ func NewClientFromConfig(opts ...LoadOption) (*Client, error) {
 // This is the recommended constructor for applications that want to support
 // both environment-variable-based (CI/containers) and file-based (developer
 // workstation) credential management without code changes.
-func NewClientFromProfile(opts ...LoadOption) (*Client, error) {
+func NewDefaultClient(opts ...LoadOption) (*Client, error) {
 	rawURL := os.Getenv(EnvURL)
 	token := os.Getenv(EnvToken)
 

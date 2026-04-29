@@ -113,7 +113,7 @@
 //
 // # Layered credential lookup
 //
-// [NewClientFromProfile] is the recommended constructor for applications that
+// [NewDefaultClient] is the recommended constructor for applications that
 // need to run in both CI/container environments (env vars) and on developer
 // workstations (credentials file) without code changes.
 //
@@ -126,10 +126,10 @@
 // Examples:
 //
 //	// Env vars win in CI; falls back to the "default" profile locally.
-//	client, err := sentinelone.NewClientFromProfile()
+//	client, err := sentinelone.NewDefaultClient()
 //
 //	// Env vars win in CI; falls back to the "production" profile locally.
-//	client, err := sentinelone.NewClientFromProfile(sentinelone.WithProfile("production"))
+//	client, err := sentinelone.NewDefaultClient(sentinelone.WithProfile("production"))
 //
 // # Rate Limiting
 //

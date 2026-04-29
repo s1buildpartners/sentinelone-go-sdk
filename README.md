@@ -163,7 +163,7 @@ if err != nil {
 
 ### Layered lookup (recommended)
 
-`NewClientFromProfile` is the recommended constructor for applications that need to run in both CI/container environments (env vars) and on developer workstations (credentials file) without code changes.
+`NewDefaultClient` is the recommended constructor for applications that need to run in both CI/container environments (env vars) and on developer workstations (credentials file) without code changes.
 
 **Priority order:**
 
@@ -172,19 +172,19 @@ if err != nil {
 
 ```go
 // Env vars win in CI; falls back to the "default" profile locally.
-client, err := sentinelone.NewClientFromProfile()
+client, err := sentinelone.NewDefaultClient()
 if err != nil {
     log.Fatal(err)
 }
 
 // Env vars win in CI; falls back to the "production" profile locally.
-client, err = sentinelone.NewClientFromProfile(sentinelone.WithProfile("production"))
+client, err = sentinelone.NewDefaultClient(sentinelone.WithProfile("production"))
 if err != nil {
     log.Fatal(err)
 }
 
 // Options can be mixed freely — both ConfigOption and ClientOption are accepted.
-client, err = sentinelone.NewClientFromProfile(
+client, err = sentinelone.NewDefaultClient(
     sentinelone.WithProfile("production"),
     sentinelone.WithTimeout(60*time.Second),
 )
