@@ -105,7 +105,7 @@ func TestNewClientFromEnv_WithOptions(t *testing.T) {
 func TestNewClientFromConfig_DefaultProfile(t *testing.T) {
 	t.Setenv(EnvConfig, writeTestConfig(t, multiProfileConfig))
 
-	cli, err := NewClientFromConfig("")
+	cli, err := NewClientFromConfig()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -120,7 +120,7 @@ func TestNewClientFromConfig_DefaultProfile(t *testing.T) {
 func TestNewClientFromConfig_NamedProfile(t *testing.T) {
 	t.Setenv(EnvConfig, writeTestConfig(t, multiProfileConfig))
 
-	cli, err := NewClientFromConfig("production")
+	cli, err := NewClientFromConfig(WithProfile("production"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestNewClientFromConfig_NamedProfile(t *testing.T) {
 func TestNewClientFromConfig_ProfileNotFound(t *testing.T) {
 	t.Setenv(EnvConfig, writeTestConfig(t, multiProfileConfig))
 
-	_, err := NewClientFromConfig("nonexistent")
+	_, err := NewClientFromConfig(WithProfile("nonexistent"))
 	if err == nil {
 		t.Fatal("expected error for missing profile")
 	}
@@ -147,7 +147,7 @@ func TestNewClientFromConfig_ProfileNotFound(t *testing.T) {
 func TestNewClientFromConfig_MissingURL(t *testing.T) {
 	t.Setenv(EnvConfig, writeTestConfig(t, "[default]\ntoken = tok\n"))
 
-	_, err := NewClientFromConfig("")
+	_, err := NewClientFromConfig()
 	if err == nil {
 		t.Fatal("expected error for missing url")
 	}
@@ -159,7 +159,7 @@ func TestNewClientFromConfig_MissingURL(t *testing.T) {
 func TestNewClientFromConfig_MissingToken(t *testing.T) {
 	t.Setenv(EnvConfig, writeTestConfig(t, "[default]\nurl = https://test.sentinelone.net\n"))
 
-	_, err := NewClientFromConfig("")
+	_, err := NewClientFromConfig()
 	if err == nil {
 		t.Fatal("expected error for missing token")
 	}
@@ -171,7 +171,7 @@ func TestNewClientFromConfig_MissingToken(t *testing.T) {
 func TestNewClientFromConfig_FileNotFound(t *testing.T) {
 	t.Setenv(EnvConfig, "/nonexistent/path/credentials")
 
-	_, err := NewClientFromConfig("")
+	_, err := NewClientFromConfig()
 	if err == nil {
 		t.Fatal("expected error for missing file")
 	}
@@ -183,7 +183,7 @@ func TestNewClientFromConfig_FileNotFound(t *testing.T) {
 func TestNewClientFromConfig_WithOptions(t *testing.T) {
 	t.Setenv(EnvConfig, writeTestConfig(t, multiProfileConfig))
 
-	cli, err := NewClientFromConfig("staging", WithRateLimiting(false))
+	cli, err := NewClientFromConfig(WithProfile("staging"), WithRateLimiting(false))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -195,6 +195,41 @@ func TestNewClientFromConfig_WithOptions(t *testing.T) {
 	}
 }
 
+func TestNewClientFromConfig_WithConfigFile(t *testing.T) {
+	// SENTINELONE_CONFIG is not set; path comes exclusively from WithConfigFile.
+	t.Setenv(EnvConfig, "")
+
+	path := writeTestConfig(t, multiProfileConfig)
+
+	cli, err := NewClientFromConfig(WithConfigFile(path))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cli.baseURL != "https://default.sentinelone.net" {
+		t.Errorf("baseURL = %q", cli.baseURL)
+	}
+	if cli.apiToken != "default-token" {
+		t.Errorf("apiToken = %q", cli.apiToken)
+	}
+}
+
+func TestNewClientFromConfig_WithConfigFileAndProfile(t *testing.T) {
+	t.Setenv(EnvConfig, "")
+
+	path := writeTestConfig(t, multiProfileConfig)
+
+	cli, err := NewClientFromConfig(WithConfigFile(path), WithProfile("production"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cli.baseURL != "https://prod.sentinelone.net" {
+		t.Errorf("baseURL = %q", cli.baseURL)
+	}
+	if cli.apiToken != "prod-token" {
+		t.Errorf("apiToken = %q", cli.apiToken)
+	}
+}
+
 // --- NewClientFromProfile ---
 
 func TestNewClientFromProfile_EnvVarsPriority(t *testing.T) {
@@ -202,7 +237,7 @@ func TestNewClientFromProfile_EnvVarsPriority(t *testing.T) {
 	t.Setenv(EnvURL, "https://env.sentinelone.net")
 	t.Setenv(EnvToken, "env-token")
 
-	cli, err := NewClientFromProfile("production")
+	cli, err := NewClientFromProfile(WithProfile("production"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -219,7 +254,7 @@ func TestNewClientFromProfile_FallbackToConfig(t *testing.T) {
 	t.Setenv(EnvURL, "")
 	t.Setenv(EnvToken, "")
 
-	cli, err := NewClientFromProfile("staging")
+	cli, err := NewClientFromProfile(WithProfile("staging"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -237,7 +272,7 @@ func TestNewClientFromProfile_EmptyProfileUsesEnvProfile(t *testing.T) {
 	t.Setenv(EnvToken, "")
 	t.Setenv(EnvProfile, "production")
 
-	cli, err := NewClientFromProfile("")
+	cli, err := NewClientFromProfile()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -252,7 +287,7 @@ func TestNewClientFromProfile_EmptyProfileFallsBackToDefault(t *testing.T) {
 	t.Setenv(EnvToken, "")
 	t.Setenv(EnvProfile, "")
 
-	cli, err := NewClientFromProfile("")
+	cli, err := NewClientFromProfile()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -268,7 +303,7 @@ func TestNewClientFromProfile_OnlyURLSet(t *testing.T) {
 	t.Setenv(EnvToken, "")
 	t.Setenv(EnvProfile, "")
 
-	cli, err := NewClientFromProfile("")
+	cli, err := NewClientFromProfile()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -284,12 +319,46 @@ func TestNewClientFromProfile_OnlyTokenSet(t *testing.T) {
 	t.Setenv(EnvToken, "env-token")
 	t.Setenv(EnvProfile, "")
 
-	cli, err := NewClientFromProfile("")
+	cli, err := NewClientFromProfile()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if cli.baseURL != "https://default.sentinelone.net" {
 		t.Errorf("baseURL = %q, want config file default", cli.baseURL)
+	}
+}
+
+func TestNewClientFromProfile_WithConfigFile(t *testing.T) {
+	t.Setenv(EnvConfig, "")
+	t.Setenv(EnvURL, "")
+	t.Setenv(EnvToken, "")
+
+	path := writeTestConfig(t, multiProfileConfig)
+
+	cli, err := NewClientFromProfile(WithConfigFile(path), WithProfile("staging"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cli.baseURL != "https://staging.sentinelone.net" {
+		t.Errorf("baseURL = %q", cli.baseURL)
+	}
+}
+
+func TestNewClientFromProfile_ConfigError(t *testing.T) {
+	t.Setenv(EnvConfig, "")
+	t.Setenv(EnvURL, "")
+	t.Setenv(EnvToken, "")
+
+	orig := userConfigDirFn
+	userConfigDirFn = func() (string, error) { return "", errors.New("no home directory") }
+	defer func() { userConfigDirFn = orig }()
+
+	_, err := NewClientFromProfile()
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "resolve config directory") {
+		t.Errorf("unexpected error: %v", err)
 	}
 }
 
@@ -470,7 +539,7 @@ func TestNewClientFromConfig_ConfigFilePathError(t *testing.T) {
 	userConfigDirFn = func() (string, error) { return "", errors.New("no home directory") }
 	defer func() { userConfigDirFn = orig }()
 
-	_, err := NewClientFromConfig("")
+	_, err := NewClientFromConfig()
 	if err == nil {
 		t.Fatal("expected error")
 	}

@@ -51,6 +51,8 @@ type Client struct {
 // the underlying HTTP client behaviour.
 type ClientOption func(*Client)
 
+func (ClientOption) applyLoadOption() {}
+
 // WithHTTPClient replaces the default [net/http.Client] used for requests.
 // This is the right hook for custom transports, proxies, or mTLS configuration.
 func WithHTTPClient(hc *http.Client) ClientOption {

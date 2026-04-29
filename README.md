@@ -100,7 +100,7 @@ Rather than embedding credentials in code you can load them from environment var
 | `SENTINELONE_URL` | Management console base URL |
 | `SENTINELONE_TOKEN` | API token |
 | `SENTINELONE_CONFIG` | Override the credentials file path |
-| `SENTINELONE_PROFILE` | Default profile name (used when profile arg is `""`) |
+| `SENTINELONE_PROFILE` | Default profile name (used when `WithProfile` is not provided) |
 
 ```go
 // Both SENTINELONE_URL and SENTINELONE_TOKEN must be set.
@@ -142,14 +142,20 @@ token = staging-api-token
 Both `=` and `:` are accepted as key-value separators.
 
 ```go
-// Load the "default" profile (pass "" for the default).
-client, err := sentinelone.NewClientFromConfig("")
+// Load the "default" profile.
+client, err := sentinelone.NewClientFromConfig()
 if err != nil {
     log.Fatal(err)
 }
 
 // Load a named profile.
-client, err = sentinelone.NewClientFromConfig("production")
+client, err = sentinelone.NewClientFromConfig(sentinelone.WithProfile("production"))
+if err != nil {
+    log.Fatal(err)
+}
+
+// Use a custom credentials file path.
+client, err = sentinelone.NewClientFromConfig(sentinelone.WithConfigFile("/etc/myapp/creds"))
 if err != nil {
     log.Fatal(err)
 }
@@ -162,23 +168,24 @@ if err != nil {
 **Priority order:**
 
 1. `SENTINELONE_URL` + `SENTINELONE_TOKEN` — used directly when both are set.
-2. Credentials file — the named profile is loaded. When the profile argument is `""`, `SENTINELONE_PROFILE` is checked and then `"default"` is used as a final fallback.
+2. Credentials file — the named profile is loaded. When `WithProfile` is not provided, `SENTINELONE_PROFILE` is checked and then `"default"` is used as a final fallback.
 
 ```go
 // Env vars win in CI; falls back to the "default" profile locally.
-client, err := sentinelone.NewClientFromProfile("")
+client, err := sentinelone.NewClientFromProfile()
 if err != nil {
     log.Fatal(err)
 }
 
 // Env vars win in CI; falls back to the "production" profile locally.
-client, err = sentinelone.NewClientFromProfile("production")
+client, err = sentinelone.NewClientFromProfile(sentinelone.WithProfile("production"))
 if err != nil {
     log.Fatal(err)
 }
 
-// Options work the same way as with NewClient.
-client, err = sentinelone.NewClientFromProfile("",
+// Options can be mixed freely — both ConfigOption and ClientOption are accepted.
+client, err = sentinelone.NewClientFromProfile(
+    sentinelone.WithProfile("production"),
     sentinelone.WithTimeout(60*time.Second),
 )
 ```

@@ -77,10 +77,11 @@
 // # Loading from a credentials file
 //
 // [NewClientFromConfig] reads credentials from an INI-style file under the
-// named profile.  Pass "" to use the "default" profile.
+// named profile.  Use [WithProfile] to choose a profile; the "default" profile
+// is used when it is omitted.  Use [WithConfigFile] to bypass the
+// SENTINELONE_CONFIG environment variable and the platform default path.
 //
-// The file path is taken from SENTINELONE_CONFIG when set; otherwise the
-// platform default is used:
+// The default file path is platform-specific:
 //   - Linux/BSD:  $XDG_CONFIG_HOME/sentinelone/credentials  (or ~/.config/…)
 //   - macOS:      ~/Library/Application Support/sentinelone/credentials
 //   - Windows:    %AppData%\SentinelOne\credentials
@@ -98,13 +99,17 @@
 //
 // Both '=' and ':' are accepted as key-value separators.
 //
-// Load the default profile (pass ""):
+// Load the default profile:
 //
-//	client, err := sentinelone.NewClientFromConfig("")
+//	client, err := sentinelone.NewClientFromConfig()
 //
 // Load a named profile:
 //
-//	client, err := sentinelone.NewClientFromConfig("production")
+//	client, err := sentinelone.NewClientFromConfig(sentinelone.WithProfile("production"))
+//
+// Specify a custom credentials file:
+//
+//	client, err := sentinelone.NewClientFromConfig(sentinelone.WithConfigFile("/etc/myapp/creds"))
 //
 // # Layered credential lookup
 //
@@ -114,16 +119,17 @@
 //
 // Priority order:
 //  1. SENTINELONE_URL and SENTINELONE_TOKEN — used directly when both are set.
-//  2. Credentials file — the named profile is loaded.  When profile is "",
-//     SENTINELONE_PROFILE is checked and then "default" is used as a fallback.
+//  2. Credentials file — the named profile is loaded.  When [WithProfile] is
+//     not provided, SENTINELONE_PROFILE is checked and then "default" is used
+//     as a fallback.
 //
 // Examples:
 //
 //	// Env vars win in CI; falls back to the "default" profile locally.
-//	client, err := sentinelone.NewClientFromProfile("")
+//	client, err := sentinelone.NewClientFromProfile()
 //
 //	// Env vars win in CI; falls back to the "production" profile locally.
-//	client, err := sentinelone.NewClientFromProfile("production")
+//	client, err := sentinelone.NewClientFromProfile(sentinelone.WithProfile("production"))
 //
 // # Rate Limiting
 //

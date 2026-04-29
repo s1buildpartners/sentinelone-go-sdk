@@ -41,11 +41,68 @@ var (
 //nolint:gochecknoglobals
 var userConfigDirFn = os.UserConfigDir
 
+// LoadOption is a sealed option accepted by [NewClientFromConfig] and
+// [NewClientFromProfile].  Both [ClientOption] and [ConfigOption] satisfy it.
+//
+// The unexported marker method prevents external types from satisfying the
+// interface, keeping the option set closed to this package.
+type LoadOption interface {
+	applyLoadOption()
+}
+
+// credentialConfig collects the credential-loading settings extracted from
+// [LoadOption] values by [applyLoadOptions].
+type credentialConfig struct {
+	profile    string
+	configFile string
+}
+
+// ConfigOption configures credential-loading behaviour such as the profile
+// name and credentials file path.  It satisfies [LoadOption] and can be
+// mixed with [ClientOption] values in [NewClientFromConfig] and
+// [NewClientFromProfile].
+type ConfigOption func(*credentialConfig)
+
+func (ConfigOption) applyLoadOption() {}
+
+// WithProfile sets the profile name to load from the credentials file.
+// If not specified, [EnvProfile] (SENTINELONE_PROFILE) is checked, then
+// "default" is used as a final fallback.
+func WithProfile(name string) ConfigOption {
+	return func(c *credentialConfig) { c.profile = name }
+}
+
+// WithConfigFile sets an explicit path to the credentials file.  When set,
+// the [EnvConfig] environment variable and the default platform path are both
+// bypassed.
+func WithConfigFile(path string) ConfigOption {
+	return func(c *credentialConfig) { c.configFile = path }
+}
+
 // Profile holds the base URL and API token for a named SentinelOne management
 // tenant.  Values are populated by [NewClientFromConfig] or [NewClientFromProfile].
 type Profile struct {
 	URL   string
 	Token string
+}
+
+// applyLoadOptions partitions a mixed slice of [LoadOption] values into
+// credential-loading settings and [ClientOption] values.
+func applyLoadOptions(opts []LoadOption) (credentialConfig, []ClientOption) {
+	var cfg credentialConfig
+
+	var clientOpts []ClientOption
+
+	for _, opt := range opts {
+		switch typedOpt := opt.(type) {
+		case ConfigOption:
+			typedOpt(&cfg)
+		case ClientOption:
+			clientOpts = append(clientOpts, typedOpt)
+		}
+	}
+
+	return cfg, clientOpts
 }
 
 // NewClientFromEnv creates a Client using credentials from environment variables.
@@ -70,12 +127,15 @@ func NewClientFromEnv(opts ...ClientOption) (*Client, error) {
 }
 
 // NewClientFromConfig creates a Client by loading credentials from the
-// credentials file under the named profile.
+// credentials file under a named profile.
 //
-// If profile is "", the "default" profile is used.
+// Options:
+//   - [WithProfile]: profile name to load; defaults to "default" when omitted.
+//   - [WithConfigFile]: explicit path to the credentials file; overrides
+//     [EnvConfig] and the default platform path.
+//   - Any [ClientOption] (e.g. [WithRateLimiting], [WithTimeout]).
 //
-// The file path is taken from [EnvConfig] (SENTINELONE_CONFIG) when set;
-// otherwise it defaults to the platform config directory:
+// The default file path is platform-specific:
 //   - Linux/BSD: $XDG_CONFIG_HOME/sentinelone/credentials (or ~/.config/…)
 //   - macOS:     ~/Library/Application Support/sentinelone/credentials
 //   - Windows:   %AppData%\SentinelOne\credentials
@@ -92,13 +152,15 @@ func NewClientFromEnv(opts ...ClientOption) (*Client, error) {
 //	token = prod-api-token
 //
 // Both '=' and ':' are accepted as key-value separators.
-func NewClientFromConfig(profile string, opts ...ClientOption) (*Client, error) {
-	prof, err := loadProfile(profile)
+func NewClientFromConfig(opts ...LoadOption) (*Client, error) {
+	cfg, clientOpts := applyLoadOptions(opts)
+
+	prof, err := loadProfile(cfg.profile, cfg.configFile)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewClient(prof.URL, prof.Token, opts...), nil
+	return NewClient(prof.URL, prof.Token, clientOpts...), nil
 }
 
 // NewClientFromProfile creates a Client using a layered credential lookup.
@@ -107,27 +169,39 @@ func NewClientFromConfig(profile string, opts ...ClientOption) (*Client, error) 
 //  1. [EnvURL] and [EnvToken] environment variables — if both are set they
 //     are used directly and the config file is not read.
 //  2. Config file — credentials are loaded for the requested profile.
-//     If profile is "", [EnvProfile] (SENTINELONE_PROFILE) is checked first;
-//     "default" is used as a final fallback.
+//     If [WithProfile] is not provided, [EnvProfile] (SENTINELONE_PROFILE) is
+//     checked first; "default" is used as a final fallback.
+//
+// Options:
+//   - [WithProfile]: profile name to load from the credentials file.
+//   - [WithConfigFile]: explicit path to the credentials file.
+//   - Any [ClientOption] (e.g. [WithRateLimiting], [WithTimeout]).
 //
 // This is the recommended constructor for applications that want to support
 // both environment-variable-based (CI/containers) and file-based (developer
 // workstation) credential management without code changes.
-func NewClientFromProfile(profile string, opts ...ClientOption) (*Client, error) {
+func NewClientFromProfile(opts ...LoadOption) (*Client, error) {
 	rawURL := os.Getenv(EnvURL)
 	token := os.Getenv(EnvToken)
 
+	cfg, clientOpts := applyLoadOptions(opts)
+
 	if rawURL != "" && token != "" {
-		return NewClient(rawURL, token, opts...), nil
+		return NewClient(rawURL, token, clientOpts...), nil
 	}
 
-	if profile == "" {
+	if cfg.profile == "" {
 		if p := os.Getenv(EnvProfile); p != "" {
-			profile = p
+			cfg.profile = p
 		}
 	}
 
-	return NewClientFromConfig(profile, opts...)
+	prof, err := loadProfile(cfg.profile, cfg.configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClient(prof.URL, prof.Token, clientOpts...), nil
 }
 
 // defaultConfigPath returns the OS-appropriate default credentials file path.
@@ -151,15 +225,24 @@ func configFilePath() (string, error) {
 }
 
 // loadProfile reads the named profile from the credentials file and validates
-// that both URL and token are present.
-func loadProfile(name string) (Profile, error) {
+// that both URL and token are present.  If configFile is non-empty it is used
+// directly; otherwise [configFilePath] is called to determine the path.
+func loadProfile(name, configFile string) (Profile, error) {
 	if name == "" {
 		name = defaultProfileName
 	}
 
-	path, err := configFilePath()
-	if err != nil {
-		return Profile{}, err
+	var path string
+
+	if configFile != "" {
+		path = configFile
+	} else {
+		filePath, err := configFilePath()
+		if err != nil {
+			return Profile{}, err
+		}
+
+		path = filePath
 	}
 
 	profiles, err := parseConfigFile(path)
