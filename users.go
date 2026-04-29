@@ -97,7 +97,7 @@ func (u *UsersClient) Update(ctx context.Context, userID string, req UpdateUserR
 // API: DELETE /web/api/v2.1/users/{user_id}
 // Required permission: Users.delete
 func (u *UsersClient) Delete(ctx context.Context, userID string) error {
-	_, err := u.c.delete(ctx, "/users/"+userID, nil, nil)
+	_, err := u.c.delete(ctx, "/users/"+userID, nil)
 
 	return err
 }

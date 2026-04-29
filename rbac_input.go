@@ -38,7 +38,7 @@ type UpdateRoleData struct {
 
 // DeleteRoleRequest is the request body for DELETE /rbac/role/{id}.
 type DeleteRoleRequest struct {
-	Data *struct{} `json:"data,omitempty"`
+	Data struct{} `json:"data"`
 }
 
 // ListRolesParams contains query parameters for GET /web/api/v2.1/rbac/roles.

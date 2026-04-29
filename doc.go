@@ -36,6 +36,8 @@
 //
 // # Creating a client
 //
+// Pass credentials directly:
+//
 //	client := sentinelone.NewClient(
 //	    "https://your-tenant.sentinelone.net",
 //	    "your-api-token",
@@ -58,6 +60,70 @@
 //	    "your-api-token",
 //	    sentinelone.WithHTTPClient(&http.Client{Transport: transport}),
 //	)
+//
+// # Credential configuration
+//
+// Instead of supplying credentials directly to [NewClient] you can load them
+// from environment variables or a credentials file.
+//
+// # Loading from environment variables
+//
+// Set SENTINELONE_URL to the management console base URL and
+// SENTINELONE_TOKEN to a valid API token, then call [NewClientFromEnv].
+// An error is returned if either variable is absent or empty.
+//
+//	client, err := sentinelone.NewClientFromEnv()
+//
+// # Loading from a credentials file
+//
+// [NewClientFromConfig] reads credentials from an INI-style file under the
+// named profile.  Pass "" to use the "default" profile.
+//
+// The file path is taken from SENTINELONE_CONFIG when set; otherwise the
+// platform default is used:
+//   - Linux/BSD:  $XDG_CONFIG_HOME/sentinelone/credentials  (or ~/.config/…)
+//   - macOS:      ~/Library/Application Support/sentinelone/credentials
+//   - Windows:    %AppData%\SentinelOne\credentials
+//
+// File format:
+//
+//	# lines starting with '#' or ';' are comments
+//	[default]
+//	url   = https://tenant.sentinelone.net
+//	token = your-api-token
+//
+//	[production]
+//	url   = https://prod.sentinelone.net
+//	token = prod-api-token
+//
+// Both '=' and ':' are accepted as key-value separators.
+//
+// Load the default profile (pass ""):
+//
+//	client, err := sentinelone.NewClientFromConfig("")
+//
+// Load a named profile:
+//
+//	client, err := sentinelone.NewClientFromConfig("production")
+//
+// # Layered credential lookup
+//
+// [NewClientFromProfile] is the recommended constructor for applications that
+// need to run in both CI/container environments (env vars) and on developer
+// workstations (credentials file) without code changes.
+//
+// Priority order:
+//  1. SENTINELONE_URL and SENTINELONE_TOKEN — used directly when both are set.
+//  2. Credentials file — the named profile is loaded.  When profile is "",
+//     SENTINELONE_PROFILE is checked and then "default" is used as a fallback.
+//
+// Examples:
+//
+//	// Env vars win in CI; falls back to the "default" profile locally.
+//	client, err := sentinelone.NewClientFromProfile("")
+//
+//	// Env vars win in CI; falls back to the "production" profile locally.
+//	client, err := sentinelone.NewClientFromProfile("production")
 //
 // # Rate Limiting
 //

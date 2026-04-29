@@ -89,6 +89,102 @@ client := sentinelone.NewClient(baseURL, token,
 
 ---
 
+## Credential configuration
+
+Rather than embedding credentials in code you can load them from environment variables or a credentials file. All three constructors accept the same `ClientOption` values as `NewClient`.
+
+### Environment variables
+
+| Variable | Description |
+| --- | --- |
+| `SENTINELONE_URL` | Management console base URL |
+| `SENTINELONE_TOKEN` | API token |
+| `SENTINELONE_CONFIG` | Override the credentials file path |
+| `SENTINELONE_PROFILE` | Default profile name (used when profile arg is `""`) |
+
+```go
+// Both SENTINELONE_URL and SENTINELONE_TOKEN must be set.
+client, err := sentinelone.NewClientFromEnv()
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### Credentials file
+
+`NewClientFromConfig` reads an INI-style file. The default location is platform-specific:
+
+| Platform | Default path |
+| --- | --- |
+| Linux / BSD | `$XDG_CONFIG_HOME/sentinelone/credentials` (or `~/.config/sentinelone/credentials`) |
+| macOS | `~/Library/Application Support/sentinelone/credentials` |
+| Windows | `%AppData%\SentinelOne\credentials` |
+
+Override the path with `SENTINELONE_CONFIG`.
+
+**File format:**
+
+```ini
+# lines beginning with '#' or ';' are comments
+[default]
+url   = https://tenant.sentinelone.net
+token = your-api-token
+
+[production]
+url   = https://prod.sentinelone.net
+token = prod-api-token
+
+[staging]
+url   = https://staging.sentinelone.net
+token = staging-api-token
+```
+
+Both `=` and `:` are accepted as key-value separators.
+
+```go
+// Load the "default" profile (pass "" for the default).
+client, err := sentinelone.NewClientFromConfig("")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Load a named profile.
+client, err = sentinelone.NewClientFromConfig("production")
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### Layered lookup (recommended)
+
+`NewClientFromProfile` is the recommended constructor for applications that need to run in both CI/container environments (env vars) and on developer workstations (credentials file) without code changes.
+
+**Priority order:**
+
+1. `SENTINELONE_URL` + `SENTINELONE_TOKEN` — used directly when both are set.
+2. Credentials file — the named profile is loaded. When the profile argument is `""`, `SENTINELONE_PROFILE` is checked and then `"default"` is used as a final fallback.
+
+```go
+// Env vars win in CI; falls back to the "default" profile locally.
+client, err := sentinelone.NewClientFromProfile("")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Env vars win in CI; falls back to the "production" profile locally.
+client, err = sentinelone.NewClientFromProfile("production")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Options work the same way as with NewClient.
+client, err = sentinelone.NewClientFromProfile("",
+    sentinelone.WithTimeout(60*time.Second),
+)
+```
+
+---
+
 ## Rate limiting
 
 The client enforces SentinelOne's published per-API-token rate limits automatically using a per-path token-bucket limiter (from `golang.org/x/time/rate`). Rate limiting is **on by default** — no configuration required.

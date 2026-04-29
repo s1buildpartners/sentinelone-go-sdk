@@ -96,7 +96,7 @@ func (s *SitesClient) Update(ctx context.Context, siteID string, req UpdateSiteR
 // API: DELETE /web/api/v2.1/sites/{site_id}
 // Required permission: Sites.delete
 func (s *SitesClient) Delete(ctx context.Context, siteID string) error {
-	_, err := s.c.delete(ctx, "/sites/"+siteID, nil, nil)
+	_, err := s.c.delete(ctx, "/sites/"+siteID, nil)
 
 	return err
 }

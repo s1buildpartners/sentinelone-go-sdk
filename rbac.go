@@ -129,7 +129,7 @@ func (r *RBACClient) Update(ctx context.Context, roleID string, req UpdateRoleRe
 // API: DELETE /web/api/v2.1/rbac/role/{role_id}
 // Required permission: Roles.delete
 func (r *RBACClient) Delete(ctx context.Context, roleID string) error {
-	_, err := r.c.delete(ctx, "/rbac/role/"+roleID, DeleteRoleRequest{}, nil)
+	_, err := r.c.delete(ctx, "/rbac/role/"+roleID, DeleteRoleRequest{})
 
 	return err
 }

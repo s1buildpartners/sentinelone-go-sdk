@@ -286,8 +286,8 @@ func (c *Client) put(ctx context.Context, path string, body, out any) (*types.Pa
 }
 
 // delete performs a DELETE request.
-func (c *Client) delete(ctx context.Context, path string, body, out any) (*types.Pagination, error) {
-	return c.do(ctx, http.MethodDelete, path, nil, body, out)
+func (c *Client) delete(ctx context.Context, path string, body any) (*types.Pagination, error) {
+	return c.do(ctx, http.MethodDelete, path, nil, body, nil)
 }
 
 // -- Query param helpers --
