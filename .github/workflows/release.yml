@@ -14,10 +14,16 @@ jobs:
     name: Create GitHub release
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for CI to complete on this commit
+      - name: Wait for main workflow to complete on this commit
         uses: ArcticLampyrid/action-wait-for-workflow@ff297b23789206858260877c4b83026d90c6db8c # v1.3.0
         with:
           workflow: main.yml
+          sha: ${{ github.sha }}
+
+      - name: Wait for CodeQL workflow to complete on this commit
+        uses: ArcticLampyrid/action-wait-for-workflow@ff297b23789206858260877c4b83026d90c6db8c # v1.3.0
+        with:
+          workflow: codeql.yml
           sha: ${{ github.sha }}
 
       - name: Checkout
