@@ -813,7 +813,7 @@ func NewRemoteShellSettingInput(enabled bool) LicenseSettingInput {
 func NewMarketplaceAccessSettingInput(enabled bool) LicenseSettingInput {
 	var setting string
 	if enabled {
-		setting = "Enabled"
+		setting = "Available"
 	} else {
 		setting = "No Access"
 	}
