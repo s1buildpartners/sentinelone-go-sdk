@@ -67,7 +67,8 @@ func TestNewClient_Defaults(t *testing.T) {
 	if cli.rateLimits == nil {
 		t.Error("expected rate limits to be enabled by default")
 	}
-	if cli.Accounts == nil || cli.Sites == nil || cli.RBAC == nil || cli.Users == nil {
+	if cli.Accounts == nil || cli.Sites == nil || cli.RBAC == nil || cli.Users == nil ||
+		cli.Agents == nil || cli.Licenses == nil {
 		t.Error("expected all sub-clients to be initialised")
 	}
 }

@@ -13,19 +13,20 @@ type CreateSiteRequest struct {
 
 // CreateSiteData holds the fields for creating a site.
 type CreateSiteData struct {
-	Name                     string        `json:"name"`
-	AccountID                string        `json:"accountId"`
-	SiteType                 string        `json:"siteType,omitempty"`
-	Expiration               *string       `json:"expiration,omitempty"`
-	ExternalID               *string       `json:"externalId,omitempty"`
-	Description              string        `json:"description,omitempty"`
-	SKU                      string        `json:"sku,omitempty"`
-	UnlimitedExpiration      *bool         `json:"unlimitedExpiration,omitempty"`
-	UnlimitedLicenses        *bool         `json:"unlimitedLicenses,omitempty"`
-	TotalLicenses            *int          `json:"totalLicenses,omitempty"`
-	InheritAccountExpiration *bool         `json:"inheritAccountExpiration,omitempty"`
-	Inherits                 *bool         `json:"inherits,omitempty"`
-	Policy                   *types.Policy `json:"policy,omitempty"`
+	Name                     string         `json:"name"`
+	AccountID                string         `json:"accountId"`
+	SiteType                 string         `json:"siteType,omitempty"`
+	Expiration               *string        `json:"expiration,omitempty"`
+	ExternalID               *string        `json:"externalId,omitempty"`
+	Description              string         `json:"description,omitempty"`
+	SKU                      string         `json:"sku,omitempty"`
+	UnlimitedExpiration      *bool          `json:"unlimitedExpiration,omitempty"`
+	UnlimitedLicenses        *bool          `json:"unlimitedLicenses,omitempty"`
+	TotalLicenses            *int           `json:"totalLicenses,omitempty"`
+	InheritAccountExpiration *bool          `json:"inheritAccountExpiration,omitempty"`
+	Inherits                 *bool          `json:"inherits,omitempty"`
+	Policy                   *types.Policy  `json:"policy,omitempty"`
+	Licenses                 *LicensesInput `json:"licenses,omitempty"`
 }
 
 // UpdateSiteRequest is the request body for PUT /sites/{id}.
@@ -35,18 +36,19 @@ type UpdateSiteRequest struct {
 
 // UpdateSiteData holds the fields for updating a site.
 type UpdateSiteData struct {
-	Name                     string        `json:"name,omitempty"`
-	SiteType                 string        `json:"siteType,omitempty"`
-	Expiration               *string       `json:"expiration,omitempty"`
-	ExternalID               *string       `json:"externalId,omitempty"`
-	Description              string        `json:"description,omitempty"`
-	SKU                      string        `json:"sku,omitempty"`
-	UnlimitedExpiration      *bool         `json:"unlimitedExpiration,omitempty"`
-	UnlimitedLicenses        *bool         `json:"unlimitedLicenses,omitempty"`
-	TotalLicenses            *int          `json:"totalLicenses,omitempty"`
-	InheritAccountExpiration *bool         `json:"inheritAccountExpiration,omitempty"`
-	Inherits                 *bool         `json:"inherits,omitempty"`
-	Policy                   *types.Policy `json:"policy,omitempty"`
+	Name                     string         `json:"name,omitempty"`
+	SiteType                 string         `json:"siteType,omitempty"`
+	Expiration               *string        `json:"expiration,omitempty"`
+	ExternalID               *string        `json:"externalId,omitempty"`
+	Description              string         `json:"description,omitempty"`
+	SKU                      string         `json:"sku,omitempty"`
+	UnlimitedExpiration      *bool          `json:"unlimitedExpiration,omitempty"`
+	UnlimitedLicenses        *bool          `json:"unlimitedLicenses,omitempty"`
+	TotalLicenses            *int           `json:"totalLicenses,omitempty"`
+	InheritAccountExpiration *bool          `json:"inheritAccountExpiration,omitempty"`
+	Inherits                 *bool          `json:"inherits,omitempty"`
+	Policy                   *types.Policy  `json:"policy,omitempty"`
+	Licenses                 *LicensesInput `json:"licenses,omitempty"`
 }
 
 // BulkUpdateSitesFilter filters which sites to bulk-update.

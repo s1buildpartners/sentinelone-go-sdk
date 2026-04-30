@@ -271,3 +271,20 @@ func (s *SitesClient) BulkUpdate(ctx context.Context, req BulkUpdateSitesRequest
 
 	return err
 }
+
+// UpdateLicenses replaces the license configuration for a site.
+// Pass a [LicensesInput] value with the complete desired license state; the
+// API overwrites all existing bundles with the supplied set.  To add a bundle,
+// include the existing bundles plus the new one.  To remove a bundle, omit it.
+//
+// API: PUT /web/api/v2.1/sites/{site_id}
+// Required permission: Sites.update
+func (s *SitesClient) UpdateLicenses(
+	ctx context.Context,
+	siteID string,
+	licenses LicensesInput,
+) (*types.Site, error) {
+	return s.Update(ctx, siteID, UpdateSiteRequest{
+		Data: UpdateSiteData{Licenses: &licenses},
+	})
+}

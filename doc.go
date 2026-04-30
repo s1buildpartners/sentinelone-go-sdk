@@ -2,13 +2,15 @@
 //
 // # Overview
 //
-// API calls are organised into four sub-clients, each accessed as a field on
+// API calls are organised into six sub-clients, each accessed as a field on
 // the root [Client]:
 //
 //   - [Client.Accounts] — account lifecycle, policy, and uninstall passwords
 //   - [Client.Sites]    — site lifecycle, policy, tokens, and bulk operations
 //   - [Client.RBAC]     — role listing, templates, and CRUD
 //   - [Client.Users]    — user CRUD, auth, 2FA, password, and API token management
+//   - [Client.Agents]   — agent listing and count
+//   - [Client.Licenses] — license module management across sites
 //
 // Every method returns typed structs from the
 // [github.com/s1buildpartners/sentinelone-go-sdk/types] subpackage and maps
@@ -368,6 +370,83 @@
 //	}
 //	// Use resp.Token to create an authenticated client.
 //	authedClient := sentinelone.NewClient(baseURL, resp.Token)
+//
+// # Licenses
+//
+// The SDK models the full license configuration block as typed structs with
+// named constants for every known SKU, surface, module, and setting value.
+//
+// Replace the license set on an account (leaves all other fields unchanged):
+//
+//	_, err = client.Accounts.UpdateLicenses(ctx, accountID, sentinelone.LicensesInput{
+//	    Bundles: []sentinelone.LicenseBundleInput{
+//	        {
+//	            Name: sentinelone.BundleComplete,
+//	            Surfaces: []sentinelone.LicenseSurfaceInput{
+//	                {Name: sentinelone.SurfaceTotalAgents, Count: 500},
+//	            },
+//	            Modules: []sentinelone.LicenseModuleItem{
+//	                {Name: sentinelone.ModuleRanger},
+//	                {Name: sentinelone.ModuleSTAR},
+//	            },
+//	            Settings: []sentinelone.LicenseSettingInput{
+//	                {
+//	                    GroupName: sentinelone.SettingGroupDVRetention,
+//	                    Setting:   sentinelone.SettingDVRetention90Days,
+//	                },
+//	            },
+//	        },
+//	    },
+//	})
+//
+// Replace the license set on a site; use [SurfaceUnlimitedCount] for unlimited:
+//
+//	_, err = client.Sites.UpdateLicenses(ctx, siteID, sentinelone.LicensesInput{
+//	    Bundles: []sentinelone.LicenseBundleInput{
+//	        {
+//	            Name: sentinelone.BundleControl,
+//	            Surfaces: []sentinelone.LicenseSurfaceInput{
+//	                {Name: sentinelone.SurfaceTotalAgents, Count: sentinelone.SurfaceUnlimitedCount},
+//	            },
+//	        },
+//	    },
+//	})
+//
+// Pass [LicensesInput] inside [CreateAccountData] or [CreateSiteData] to set
+// licenses at creation time:
+//
+//	account, err := client.Accounts.Create(ctx, sentinelone.CreateAccountRequest{
+//	    Data: sentinelone.CreateAccountData{
+//	        Name:        "Acme Corp",
+//	        AccountType: "Paid",
+//	        Licenses: &sentinelone.LicensesInput{
+//	            Bundles: []sentinelone.LicenseBundleInput{
+//	                {
+//	                    Name: sentinelone.BundleComplete,
+//	                    Surfaces: []sentinelone.LicenseSurfaceInput{
+//	                        {Name: sentinelone.SurfaceTotalAgents, Count: 1000},
+//	                    },
+//	                    Modules: []sentinelone.LicenseModuleItem{
+//	                        {Name: sentinelone.ModuleBinaryVaultMalicious},
+//	                    },
+//	                },
+//	            },
+//	        },
+//	    },
+//	})
+//
+// Add or remove modules across many sites in one call:
+//
+//	affected, err := client.Licenses.UpdateSitesModules(ctx, sentinelone.UpdateSitesModulesRequest{
+//	    Data: sentinelone.UpdateSitesModulesData{
+//	        Operation: "add",
+//	        Modules:   []sentinelone.LicenseModuleItem{{Name: sentinelone.ModuleRanger}},
+//	    },
+//	    Filter: sentinelone.UpdateSitesModulesFilter{
+//	        AccountIDs: []string{"225494730938493804"},
+//	        State:      "active",
+//	    },
+//	})
 //
 // # Helper constructors
 //

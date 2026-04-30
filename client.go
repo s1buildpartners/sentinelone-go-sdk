@@ -45,6 +45,8 @@ type Client struct {
 	Sites    *SitesClient
 	RBAC     *RBACClient
 	Users    *UsersClient
+	Agents   *AgentsClient
+	Licenses *LicensesClient
 }
 
 // ClientOption is a functional option passed to [NewClient] to customise
@@ -116,6 +118,8 @@ func NewClient(baseURL, apiToken string, opts ...ClientOption) *Client {
 	cli.Sites = &SitesClient{c: cli}
 	cli.RBAC = &RBACClient{c: cli}
 	cli.Users = &UsersClient{c: cli}
+	cli.Agents = &AgentsClient{c: cli}
+	cli.Licenses = &LicensesClient{c: cli}
 
 	return cli
 }
@@ -367,6 +371,12 @@ func setString(v url.Values, key string, val *string) {
 func setStringSlice(v url.Values, key string, vals []string) {
 	if len(vals) > 0 {
 		v.Set(key, strings.Join(vals, ","))
+	}
+}
+
+func setInt(v url.Values, key string, val *int) {
+	if val != nil {
+		v.Set(key, strconv.Itoa(*val))
 	}
 }
 

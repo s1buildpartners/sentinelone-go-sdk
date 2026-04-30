@@ -2,14 +2,18 @@
 
 A Go client library for interacting with all of the SentinelOne APIs, which includes the REST APIs, GraphQL APIs and SDL/AI SIEM APIs.
 
+> **Disclaimer:** This SDK is a community project and is not officially supported by SentinelOne in any way. Use it at your own risk. As this library is pre-1.0 and still under continuous development, interfaces are subject to change and breaking changes may be introduced between minor versions. Such changes will be noted in the [CHANGELOG](CHANGELOG.md) when applicable.
+
 This SDK currently covers the following API groups:
 
-| Group        | File                        | Methods                                                                    |
-|--------------|-----------------------------|----------------------------------------------------------------------------|
-| **Accounts** | [accounts.go](accounts.go)  | List, Get, Create, Update, policy management, uninstall passwords          |
-| **Sites**    | [sites.go](sites.go)        | List, Get, Create, Update, Delete, policy management, token rotation       |
-| **RBAC**     | [rbac.go](rbac.go)          | List roles, Get role template, Get, Create, Update, Delete roles           |
-| **Users**    | [users.go](users.go)        | List, Get, Create, Update, Delete, auth, 2FA, API tokens, SSO, onboarding  |
+| Group        | File                       | Methods                                                                           |
+|--------------|----------------------------|-----------------------------------------------------------------------------------|
+| **Accounts** | [accounts.go](accounts.go) | List, Get, Create, Update, UpdateLicenses, policy management, uninstall passwords |
+| **Sites**    | [sites.go](sites.go)       | List, Get, Create, Update, UpdateLicenses, Delete, policy, token rotation         |
+| **RBAC**     | [rbac.go](rbac.go)         | List roles, Get role template, Get, Create, Update, Delete roles                  |
+| **Users**    | [users.go](users.go)       | List, Get, Create, Update, Delete, auth, 2FA, API tokens, SSO, onboarding         |
+| **Agents**   | [agents.go](agents.go)     | List, Count                                                                       |
+| **Licenses** | [licenses.go](licenses.go) | UpdateSitesModules (bulk add/remove modules across sites)                         |
 
 ---
 
@@ -840,6 +844,207 @@ if loginResp.Status == "2fa_required" {
 
 // Log out
 err = client.Users.Logout(ctx)
+```
+
+---
+
+## Licenses
+
+The SDK models the full license configuration block — bundles, surfaces, modules, and
+per-bundle settings — as typed structs with named constants for every known enum value.
+
+### License type overview
+
+| Type                | Purpose                                        |
+|---------------------|------------------------------------------------|
+| `LicensesInput`     | Top-level block; holds a slice of bundles      |
+| `LicenseBundleInput`| One SKU with its surfaces, modules, settings   |
+| `LicenseSurfaceInput`| Entitlement count for one deployment surface  |
+| `LicenseModuleItem` | An add-on module referenced by name            |
+| `LicenseSettingInput`| A per-bundle platform setting                 |
+
+Named constants are provided for all known values:
+
+| Constant group   | Examples                                                          |
+|------------------|-------------------------------------------------------------------|
+| `Bundle*`        | `BundleCore`, `BundleComplete`, `BundleCWSServersControl`, …      |
+| `Surface*`       | `SurfaceTotalAgents`, `SurfaceTotalUsers`, `SurfaceAverageGBPerDay` |
+| `SurfaceUnlimitedCount` | `-1` — use as `Count` to grant unlimited entitlement      |
+| `Module*`        | `ModuleSTAR`, `ModuleRanger`, `ModuleVigilance`, …                |
+| `SettingGroup*`  | `SettingGroupDVRetention`, `SettingGroupAccountLevelRanger`, …    |
+| `Setting*`       | `SettingDVRetention90Days`, `SettingRangerLevelAccount`, …        |
+
+### Replace all licenses on an account
+
+`UpdateLicenses` sends only the licenses field, leaving all other account fields
+unchanged. The API replaces the existing bundle set with exactly what you supply —
+include every bundle you want to keep.
+
+```go
+_, err = client.Accounts.UpdateLicenses(ctx, accountID, sentinelone.LicensesInput{
+    Bundles: []sentinelone.LicenseBundleInput{
+        {
+            Name: sentinelone.BundleComplete,
+            Surfaces: []sentinelone.LicenseSurfaceInput{
+                {Name: sentinelone.SurfaceTotalAgents, Count: 500},
+            },
+            Modules: []sentinelone.LicenseModuleItem{
+                {Name: sentinelone.ModuleRanger},
+                {Name: sentinelone.ModuleSTAR},
+            },
+            Settings: []sentinelone.LicenseSettingInput{
+                {
+                    GroupName: sentinelone.SettingGroupDVRetention,
+                    Setting:   sentinelone.SettingDVRetention90Days,
+                },
+                {
+                    GroupName: sentinelone.SettingGroupAccountLevelRanger,
+                    Setting:   sentinelone.SettingRangerLevelAccount,
+                },
+            },
+        },
+    },
+})
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### Replace all licenses on a site
+
+```go
+_, err = client.Sites.UpdateLicenses(ctx, siteID, sentinelone.LicensesInput{
+    Bundles: []sentinelone.LicenseBundleInput{
+        {
+            Name: sentinelone.BundleControl,
+            Surfaces: []sentinelone.LicenseSurfaceInput{
+                {Name: sentinelone.SurfaceTotalAgents, Count: 100},
+            },
+        },
+    },
+})
+```
+
+Use `SurfaceUnlimitedCount` to grant unlimited entitlement:
+
+```go
+_, err = client.Sites.UpdateLicenses(ctx, siteID, sentinelone.LicensesInput{
+    Bundles: []sentinelone.LicenseBundleInput{
+        {
+            Name: sentinelone.BundleComplete,
+            Surfaces: []sentinelone.LicenseSurfaceInput{
+                {Name: sentinelone.SurfaceTotalAgents, Count: sentinelone.SurfaceUnlimitedCount},
+            },
+        },
+    },
+})
+```
+
+### Create an account with licenses
+
+Pass `Licenses` inside `CreateAccountData` to set the license configuration at
+creation time, avoiding a separate update call:
+
+```go
+account, err := client.Accounts.Create(ctx, sentinelone.CreateAccountRequest{
+    Data: sentinelone.CreateAccountData{
+        Name:        "Acme Corp",
+        AccountType: "Paid",
+        Licenses: &sentinelone.LicensesInput{
+            Bundles: []sentinelone.LicenseBundleInput{
+                {
+                    Name: sentinelone.BundleComplete,
+                    Surfaces: []sentinelone.LicenseSurfaceInput{
+                        {Name: sentinelone.SurfaceTotalAgents, Count: 1000},
+                    },
+                    Modules: []sentinelone.LicenseModuleItem{
+                        {Name: sentinelone.ModuleRanger},
+                        {Name: sentinelone.ModuleBinaryVaultMalicious},
+                    },
+                },
+                {
+                    Name: sentinelone.BundleSingularityDataLake,
+                    Surfaces: []sentinelone.LicenseSurfaceInput{
+                        {Name: sentinelone.SurfaceAverageGBPerDay, Count: 50},
+                    },
+                },
+            },
+        },
+    },
+})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Created account:", account.ID)
+```
+
+### Create a site with licenses
+
+```go
+site, err := client.Sites.Create(ctx, sentinelone.CreateSiteRequest{
+    Data: sentinelone.CreateSiteData{
+        Name:      "Production East",
+        AccountID: accountID,
+        SiteType:  "Paid",
+        Licenses: &sentinelone.LicensesInput{
+            Bundles: []sentinelone.LicenseBundleInput{
+                {
+                    Name: sentinelone.BundleComplete,
+                    Surfaces: []sentinelone.LicenseSurfaceInput{
+                        {Name: sentinelone.SurfaceTotalAgents, Count: 200},
+                    },
+                    Modules: []sentinelone.LicenseModuleItem{
+                        {Name: sentinelone.ModuleVigilance},
+                    },
+                    Settings: []sentinelone.LicenseSettingInput{
+                        {
+                            GroupName: sentinelone.SettingGroupRemoteShellAvailability,
+                            Setting:   sentinelone.SettingRemoteShellEnabled,
+                        },
+                    },
+                },
+            },
+        },
+    },
+})
+```
+
+### Bulk add or remove modules across sites
+
+`Licenses.UpdateSitesModules` adds or removes add-on modules on all sites that
+match the filter in one API call:
+
+```go
+// Add the Ranger module to every active site in an account.
+affected, err := client.Licenses.UpdateSitesModules(ctx, sentinelone.UpdateSitesModulesRequest{
+    Data: sentinelone.UpdateSitesModulesData{
+        Operation: "add",
+        Modules: []sentinelone.LicenseModuleItem{
+            {Name: sentinelone.ModuleRanger},
+        },
+    },
+    Filter: sentinelone.UpdateSitesModulesFilter{
+        AccountIDs: []string{accountID},
+        State:      "active",
+    },
+})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("Updated %d site(s)\n", affected)
+
+// Remove Rogues from specific sites.
+affected, err = client.Licenses.UpdateSitesModules(ctx, sentinelone.UpdateSitesModulesRequest{
+    Data: sentinelone.UpdateSitesModulesData{
+        Operation: "remove",
+        Modules: []sentinelone.LicenseModuleItem{
+            {Name: sentinelone.ModuleRogues},
+        },
+    },
+    Filter: sentinelone.UpdateSitesModulesFilter{
+        SiteIDs: []string{"225494730938493805", "225494730938493806"},
+    },
+})
 ```
 
 ---

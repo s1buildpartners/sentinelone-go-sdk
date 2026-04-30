@@ -13,12 +13,13 @@ type CreateAccountRequest struct {
 
 // CreateAccountData holds the fields for creating an account.
 type CreateAccountData struct {
-	Name        string        `json:"name"`
-	AccountType string        `json:"accountType,omitempty"`
-	Expiration  *string       `json:"expiration,omitempty"`
-	ExternalID  *string       `json:"externalId,omitempty"`
-	Inherits    *bool         `json:"inherits,omitempty"`
-	Policy      *types.Policy `json:"policy,omitempty"`
+	Name        string         `json:"name"`
+	AccountType string         `json:"accountType,omitempty"`
+	Expiration  *string        `json:"expiration,omitempty"`
+	ExternalID  *string        `json:"externalId,omitempty"`
+	Inherits    *bool          `json:"inherits,omitempty"`
+	Policy      *types.Policy  `json:"policy,omitempty"`
+	Licenses    *LicensesInput `json:"licenses,omitempty"`
 }
 
 // UpdateAccountRequest is the request body for PUT /accounts/{id}.
@@ -28,13 +29,14 @@ type UpdateAccountRequest struct {
 
 // UpdateAccountData holds the fields for updating an account.
 type UpdateAccountData struct {
-	Name                string        `json:"name,omitempty"`
-	AccountType         string        `json:"accountType,omitempty"`
-	Expiration          *string       `json:"expiration,omitempty"`
-	ExternalID          *string       `json:"externalId,omitempty"`
-	UnlimitedExpiration *bool         `json:"unlimitedExpiration,omitempty"`
-	Inherits            *bool         `json:"inherits,omitempty"`
-	Policy              *types.Policy `json:"policy,omitempty"`
+	Name                string         `json:"name,omitempty"`
+	AccountType         string         `json:"accountType,omitempty"`
+	Expiration          *string        `json:"expiration,omitempty"`
+	ExternalID          *string        `json:"externalId,omitempty"`
+	UnlimitedExpiration *bool          `json:"unlimitedExpiration,omitempty"`
+	Inherits            *bool          `json:"inherits,omitempty"`
+	Policy              *types.Policy  `json:"policy,omitempty"`
+	Licenses            *LicensesInput `json:"licenses,omitempty"`
 }
 
 // ReactivateAccountRequest is the request body for PUT /accounts/{id}/reactivate.

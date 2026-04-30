@@ -251,3 +251,20 @@ func (a *AccountsClient) RevokeUninstallPassword(ctx context.Context, accountID 
 
 	return err
 }
+
+// UpdateLicenses replaces the license configuration for an account.
+// Pass a [LicensesInput] value with the complete desired license state; the
+// API overwrites all existing bundles with the supplied set.  To add a bundle,
+// include the existing bundles plus the new one.  To remove a bundle, omit it.
+//
+// API: PUT /web/api/v2.1/accounts/{account_id}
+// Required permission: Accounts.update
+func (a *AccountsClient) UpdateLicenses(
+	ctx context.Context,
+	accountID string,
+	licenses LicensesInput,
+) (*types.Account, error) {
+	return a.Update(ctx, accountID, UpdateAccountRequest{
+		Data: UpdateAccountData{Licenses: &licenses},
+	})
+}

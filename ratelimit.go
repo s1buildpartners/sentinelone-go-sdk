@@ -38,6 +38,7 @@ func buildDefaultRateLimits() []pathRateLimit { //nolint:funlen
 		// Path prefixes are relative to /web/api/v2.1 (apiPathPrefix).
 		// Burst=1 when the official table lists "none".
 		{"/accounts", 100, 10},
+		{"/licenses", 10, 5},
 		{"/activities", 10, 30},
 		{"/agents", 25, 1},
 		// scan: 1 request every scanHoursPerRequest hours
