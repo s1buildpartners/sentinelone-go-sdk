@@ -958,8 +958,8 @@ sentinelone.NewNetworkDiscoveryModuleItem()
 sentinelone.NewVigilanceMDRModuleItem()
 sentinelone.NewWatchTowerModuleItem()
 
-sentinelone.NewXDRDataRetentionSettingInput(90)            // maps to nearest valid tier
-sentinelone.NewRemoteShellSettingInput(true)               // Enabled / Disabled
+sentinelone.NewXDRDataRetentionSettingInput(90)
+sentinelone.NewRemoteShellSettingInput(true)
 sentinelone.NewNetworkDiscoveryConsolidationLevelSettingInput(sentinelone.LicenseSettingNetworkDiscoveryConsolidationLevelAccount)
 ```
 

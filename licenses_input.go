@@ -758,18 +758,19 @@ func NewRemoteOpsForensicsModuleItem() LicenseModuleItem {
 //
 // Technically only certain discrete values are valid for the API (e.g. 14, 30, 90, 180, 365), but the function
 // accepts any positive integer and maps it to the nearest valid maximum value. For example, a value of 45 would map
-// to "90 Days", while a value of 400 would map to "365 Days".  Values less than 30 map to "14 Days".
+// to "90 Days", while values of 181 and 400 would map to "365 Days".  Values less than or equal to 14 map to "14
+// Days".
 func NewXDRDataRetentionSettingInput(days int) LicenseSettingInput {
 	var setting string
 
 	switch {
-	case days >= 365: //nolint:mnd
+	case days > 180: //nolint:mnd
 		setting = "365 Days"
-	case days >= 180: //nolint:mnd
+	case days > 90: //nolint:mnd
 		setting = "180 Days"
-	case days >= 90: //nolint:mnd
+	case days > 30: //nolint:mnd
 		setting = "90 Days"
-	case days >= 30: //nolint:mnd
+	case days > 14: //nolint:mnd
 		setting = "30 Days"
 	default:
 		setting = "14 Days"
