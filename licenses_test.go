@@ -26,7 +26,7 @@ func TestLicensesClient_UpdateSitesModules_Success(t *testing.T) {
 	req := UpdateSitesModulesRequest{
 		Data: UpdateSitesModulesData{
 			Operation: "add",
-			Modules:   []LicenseModuleItem{{Name: ModuleSTAR}},
+			Modules:   []LicenseModuleItem{{Name: LicenseModuleWatchTower}},
 		},
 		Filter: UpdateSitesModulesFilter{
 			SiteIDs: []string{"225494730938493804"},
@@ -52,7 +52,7 @@ func TestLicensesClient_UpdateSitesModules_RemoveOperation(t *testing.T) {
 	req := UpdateSitesModulesRequest{
 		Data: UpdateSitesModulesData{
 			Operation: "remove",
-			Modules:   []LicenseModuleItem{{Name: ModuleRSO}},
+			Modules:   []LicenseModuleItem{{Name: LicenseModuleRemoteScriptOrchestration}},
 		},
 		Filter: UpdateSitesModulesFilter{
 			AccountIDs: []string{"acc123"},
@@ -145,13 +145,13 @@ func TestAccountsClient_UpdateLicenses_Success(t *testing.T) {
 	licenses := LicensesInput{
 		Bundles: []LicenseBundleInput{
 			{
-				Name:     BundleComplete,
-				Surfaces: []LicenseSurfaceInput{{Name: SurfaceTotalAgents, Count: 100}},
-				Modules:  []LicenseModuleItem{{Name: ModuleRanger}},
-				Settings: []LicenseSettingInput{
-					{GroupName: SettingGroupAccountLevelRanger, Setting: SettingRangerLevelAccount},
-				},
+				Name:     LicenseBundleEndpointSecurityComplete,
+				Surfaces: []LicenseSurfaceInput{{Name: LicenseSurfaceTotalAgents, Count: 100}},
 			},
+		},
+		Modules: []LicenseModuleItem{{Name: LicenseModuleNetworkDiscovery}},
+		Settings: []LicenseSettingInput{
+			{GroupName: LicenseSettingNetworkDiscoveryConsolidationLevel, Setting: LicenseSettingNetworkDiscoveryConsolidationLevelAccount},
 		},
 	}
 
@@ -177,8 +177,8 @@ func TestAccountsClient_UpdateLicenses_Success(t *testing.T) {
 		t.Fatalf("expected 1 bundle, got %v", lic["bundles"])
 	}
 	bundle := bundles[0].(map[string]interface{})
-	if bundle["name"] != BundleComplete {
-		t.Errorf("expected bundle name %q, got %v", BundleComplete, bundle["name"])
+	if bundle["name"] != LicenseBundleEndpointSecurityComplete {
+		t.Errorf("expected bundle name %q, got %v", LicenseBundleEndpointSecurityComplete, bundle["name"])
 	}
 }
 
@@ -193,8 +193,8 @@ func TestAccountsClient_UpdateLicenses_UnlimitedCount(t *testing.T) {
 	licenses := LicensesInput{
 		Bundles: []LicenseBundleInput{
 			{
-				Name:     BundleCore,
-				Surfaces: []LicenseSurfaceInput{{Name: SurfaceTotalAgents, Count: SurfaceUnlimitedCount}},
+				Name:     LicenseBundleEndpointSecurityCore,
+				Surfaces: []LicenseSurfaceInput{{Name: LicenseSurfaceTotalAgents, Count: LicenseSurfaceUnlimitedCount}},
 			},
 		},
 	}
@@ -212,8 +212,8 @@ func TestAccountsClient_UpdateLicenses_UnlimitedCount(t *testing.T) {
 	surfaces := bundle["surfaces"].([]interface{})
 	surface := surfaces[0].(map[string]interface{})
 	count, ok := surface["count"].(float64)
-	if !ok || int(count) != SurfaceUnlimitedCount {
-		t.Errorf("expected count=%d, got %v", SurfaceUnlimitedCount, surface["count"])
+	if !ok || int(count) != LicenseSurfaceUnlimitedCount {
+		t.Errorf("expected count=%d, got %v", LicenseSurfaceUnlimitedCount, surface["count"])
 	}
 }
 
@@ -250,8 +250,8 @@ func TestSitesClient_UpdateLicenses_Success(t *testing.T) {
 	licenses := LicensesInput{
 		Bundles: []LicenseBundleInput{
 			{
-				Name:     BundleControl,
-				Surfaces: []LicenseSurfaceInput{{Name: SurfaceTotalAgents, Count: 50}},
+				Name:     LicenseBundleEndpointSecurityControl,
+				Surfaces: []LicenseSurfaceInput{{Name: LicenseSurfaceTotalAgents, Count: 50}},
 			},
 		},
 	}
@@ -296,8 +296,8 @@ func TestUpdateSitesModulesRequest_Serialisation(t *testing.T) {
 		Data: UpdateSitesModulesData{
 			Operation: "add",
 			Modules: []LicenseModuleItem{
-				{Name: ModuleSTAR},
-				{Name: ModuleRSO},
+				{Name: LicenseModuleWatchTower},
+				{Name: LicenseModuleRemoteScriptOrchestration},
 			},
 		},
 		Filter: UpdateSitesModulesFilter{
@@ -338,13 +338,13 @@ func TestLicensesInput_Serialisation(t *testing.T) {
 			Licenses: &LicensesInput{
 				Bundles: []LicenseBundleInput{
 					{
-						Name:     BundleComplete,
-						Surfaces: []LicenseSurfaceInput{{Name: SurfaceTotalAgents, Count: 10}},
-						Modules:  []LicenseModuleItem{{Name: ModuleRanger}},
-						Settings: []LicenseSettingInput{
-							{GroupName: SettingGroupAccountLevelRanger, Setting: SettingRangerLevelAccount},
-						},
+						Name:     LicenseBundleEndpointSecurityComplete,
+						Surfaces: []LicenseSurfaceInput{{Name: LicenseSurfaceTotalAgents, Count: 10}},
 					},
+				},
+				Modules: []LicenseModuleItem{{Name: LicenseModuleNetworkDiscovery}},
+				Settings: []LicenseSettingInput{
+					{GroupName: LicenseSettingNetworkDiscoveryConsolidationLevel, Setting: LicenseSettingNetworkDiscoveryConsolidationLevelAccount},
 				},
 			},
 		},
@@ -363,7 +363,7 @@ func TestLicensesInput_Serialisation(t *testing.T) {
 	}
 
 	bundle := bundles[0].(map[string]interface{})
-	if bundle["name"] != BundleComplete {
+	if bundle["name"] != LicenseBundleEndpointSecurityComplete {
 		t.Errorf("bundle name = %v", bundle["name"])
 	}
 
@@ -372,37 +372,37 @@ func TestLicensesInput_Serialisation(t *testing.T) {
 		t.Fatalf("expected 1 surface, got %d", len(surfaces))
 	}
 	surface := surfaces[0].(map[string]interface{})
-	if surface["name"] != SurfaceTotalAgents {
+	if surface["name"] != LicenseSurfaceTotalAgents {
 		t.Errorf("surface name = %v", surface["name"])
 	}
 	if int(surface["count"].(float64)) != 10 {
 		t.Errorf("surface count = %v", surface["count"])
 	}
 
-	modules := bundle["modules"].([]interface{})
+	modules := lic["modules"].([]interface{})
 	if len(modules) != 1 {
 		t.Fatalf("expected 1 module, got %d", len(modules))
 	}
-	if modules[0].(map[string]interface{})["name"] != ModuleRanger {
+	if modules[0].(map[string]interface{})["name"] != LicenseModuleNetworkDiscovery {
 		t.Errorf("module name = %v", modules[0])
 	}
 
-	settings := bundle["settings"].([]interface{})
+	settings := lic["settings"].([]interface{})
 	if len(settings) != 1 {
 		t.Fatalf("expected 1 setting, got %d", len(settings))
 	}
 	setting := settings[0].(map[string]interface{})
-	if setting["groupName"] != SettingGroupAccountLevelRanger {
+	if setting["groupName"] != LicenseSettingNetworkDiscoveryConsolidationLevel {
 		t.Errorf("groupName = %v", setting["groupName"])
 	}
-	if setting["setting"] != SettingRangerLevelAccount {
+	if setting["setting"] != LicenseSettingNetworkDiscoveryConsolidationLevelAccount {
 		t.Errorf("setting = %v", setting["setting"])
 	}
 }
 
 func TestLicenseSurface_ZeroCount_Serialised(t *testing.T) {
 	// Count=0 must be serialized (not omitted), as it is a valid entitlement.
-	surface := LicenseSurfaceInput{Name: SurfaceTotalAgents, Count: 0}
+	surface := LicenseSurfaceInput{Name: LicenseSurfaceTotalAgents, Count: 0}
 	b, err := json.Marshal(surface)
 	if err != nil {
 		t.Fatal(err)

@@ -7,6 +7,97 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-30
+
+### Added
+
+- Named constants for account and site type fields:
+  - `AccountTypeTrial`, `AccountTypePaid` — valid values for `AccountType` on
+    `CreateAccountData`, `UpdateAccountData`, and `ListAccountsParams`
+  - `SiteTypeTrial`, `SiteTypePaid` — valid values for `SiteType` on
+    `CreateSiteData`, `UpdateSiteData`, `ListSitesParams`, and
+    `UpdateSitesModulesFilter`
+- Named constants for entity state filter fields (`StateActive`, `StateExpired`,
+  `StateDeleted`) — valid values for `State` on `ListAccountsParams`,
+  `ListSitesParams`, and `UpdateSitesModulesFilter`
+- Named constants for license setting values:
+  - `LicenseSettingNetworkDiscoveryConsolidationLevelAccount`,
+    `LicenseSettingNetworkDiscoveryConsolidationLevelSite` — valid values for
+    `NewNetworkDiscoveryConsolidationLevelSettingInput`
+  - `LicenseSettingIdentitySecurityPostureModeFull`,
+    `LicenseSettingIdentitySecurityPostureModeLite` — valid values for
+    `NewIdentitySecurityPostureModeSettingInput`
+- Additional bundle, module, and setting constants (expanding the set from
+  `[0.1.0]`):
+  - `LicenseBundle*` — 22 SKU names covering Endpoint Security (Core, Complete,
+    Control), Cloud Workload Security (servers, serverless containers, containers
+    — Control and Complete tiers each), Cloud-Native Security (Pro, Foundations),
+    Data Ingest, Log Analytics, Mobile Security, Hyperautomation, Identity Threat
+    Detection, Identity Security Posture Management, Identity Security for IDP,
+    Unified Identity, Identity Detection and Response, and Threat Detection for
+    NetApp and Data Stores
+  - `LicenseModule*` — 30 add-on names covering XDR data retention tiers (30 d –
+    5 y), Cloud Funnel, Vigilance MDR, Binary Vault, Network Discovery, Singularity
+    MDR, Threat Intel, Purple AI (Foundations, SOC Analyst), WatchTower,
+    Vulnerability Management, Unprotected Endpoint Discovery, Remote Script
+    Orchestration, Wayfinder (Elite, Essentials, Threat Hunting), and Remote Ops
+    Forensics
+  - `LicenseSurface*` — 7 surface names: `TotalAgents`, `TotalEndpoints`,
+    `TotalUsers`, `AvgGBDay`, `Workloads`, `LongRangeQueryCredits`,
+    `ActionPacks`; plus `LicenseSurfaceUnlimitedCount = -1`
+  - `LicenseSetting*` — 6 setting group names and 4 setting value constants
+- Helper constructor functions that build correctly-typed `LicenseBundleInput`,
+  `LicenseModuleItem`, and `LicenseSettingInput` values without manual struct
+  construction:
+  - **Bundle constructors** (one per SKU, named `New<SKU>BundleInput`) — accept
+    the relevant entitlement count(s) and return a `LicenseBundleInput` with the
+    correct name and surfaces pre-populated
+  - **Module constructors** (`New<Module>ModuleItem`) — return a
+    `LicenseModuleItem` for each supported add-on
+  - **Setting constructors** — `NewXDRDataRetentionSettingInput(days int)`,
+    `NewEDRDataRetentionSettingInput()`, `NewRemoteShellSettingInput(enabled bool)`,
+    `NewMarketplaceAccessSettingInput(enabled bool)`,
+    `NewNetworkDiscoveryConsolidationLevelSettingInput(level string)`,
+    `NewIdentitySecurityPostureModeSettingInput(mode string)`
+
+- `WithLogger(l *slog.Logger) ClientOption` — injects a structured logger into
+  the client.  By default all output is discarded (`slog.DiscardHandler`).  Pass
+  your application's logger to surface request traces, retry warnings, and API
+  error details without touching the client internals.
+- Structured logging throughout the central `do()` request loop:
+  - `Debug` — rate-limit token wait, each outbound request (method, path,
+    attempt number), and successful response completion (status code)
+  - `Warn` — rate-limit wait interrupted by context cancellation, 429 backoff
+    (method, path, attempt, `retry_after` duration), and any non-2xx API
+    response (method, path, status code)
+  - `Error` — request body marshal failure, request build failure, HTTP
+    transport error, response body read error, and response decode failure
+
+### Removed
+
+- Inaccurate `// Required permission:` doc-comment lines from all API methods
+  in `accounts.go`, `agents.go`, `licenses.go`, `rbac.go`, `sites.go`, and
+  `users.go`.  The permission names were not verified against the live API and
+  were therefore misleading.  Refer to the SentinelOne API Hub in your console
+  for authoritative permission information.
+
+### Changed
+
+- License input types overhauled (breaking changes relative to `[0.1.0]`):
+  - All license enum constants renamed with the `License` prefix (e.g.
+    `BundleComplete` → `LicenseBundleEndpointSecurityComplete`, `ModuleRanger` →
+    `LicenseModuleNetworkDiscovery`, `SettingGroupDVRetention` →
+    `LicenseSettingXDRDataRetention`)
+  - `LicenseBundleInput` simplified: the `Modules` and `Settings` fields have
+    moved up to `LicensesInput`; `LicenseBundleInput` now carries only `Name`,
+    `MajorVersion`, and `Surfaces`
+  - `doc.go` and `README.md` examples updated throughout to use the new constant
+    names and helper constructor functions instead of manual struct literals
+- `README.md` — added a Table of Contents, a Developer Notes section listing
+  the toolchain used by maintainers, and a Questions/Issues/Feature Requests
+  section.  The API-documentation reference now points to **Help > API Hub** in
+  the SentinelOne console rather than a placeholder URL.
+
 ## [0.1.0] - 2026-04-29
 
 ### Added
@@ -149,5 +240,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `govulncheck` CI job: corrected workflow step configuration that prevented the
   job from running successfully
 
-[Unreleased]: https://github.com/s1buildpartners/sentinelone-go-sdk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/s1buildpartners/sentinelone-go-sdk/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/s1buildpartners/sentinelone-go-sdk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/s1buildpartners/sentinelone-go-sdk/releases/tag/v0.1.0

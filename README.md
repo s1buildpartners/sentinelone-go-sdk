@@ -1,4 +1,5 @@
-# sentinelone-go-sdk
+<!-- omit from toc -->
+# SentinelOne API SDK for Go(lang)
 
 A Go client library for interacting with all of the SentinelOne APIs, which includes the REST APIs, GraphQL APIs and SDL/AI SIEM APIs.
 
@@ -14,6 +15,77 @@ This SDK currently covers the following API groups:
 | **Users**    | [users.go](users.go)       | List, Get, Create, Update, Delete, auth, 2FA, API tokens, SSO, onboarding         |
 | **Agents**   | [agents.go](agents.go)     | List, Count                                                                       |
 | **Licenses** | [licenses.go](licenses.go) | UpdateSitesModules (bulk add/remove modules across sites)                         |
+
+---
+
+<!-- omit from toc -->
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Authentication](#authentication)
+- [Creating a client](#creating-a-client)
+  - [Options](#options)
+- [Credential configuration](#credential-configuration)
+  - [Environment variables](#environment-variables)
+  - [Credentials file](#credentials-file)
+  - [Layered lookup (recommended)](#layered-lookup-recommended)
+- [Rate limiting](#rate-limiting)
+  - [How it works](#how-it-works)
+  - [Rate limits enforced](#rate-limits-enforced)
+  - [Disabling rate limiting](#disabling-rate-limiting)
+  - [Configuring retry behaviour](#configuring-retry-behaviour)
+- [Context](#context)
+- [Error handling](#error-handling)
+- [Pagination](#pagination)
+- [Helper functions](#helper-functions)
+- [Accounts](#accounts)
+  - [List accounts](#list-accounts)
+  - [Get a single account](#get-a-single-account)
+  - [Create an account](#create-an-account)
+  - [Update an account](#update-an-account)
+  - [Manage the account policy](#manage-the-account-policy)
+  - [Uninstall password](#uninstall-password)
+  - [Lifecycle operations](#lifecycle-operations)
+- [Sites](#sites)
+  - [List sites](#list-sites)
+  - [Get a single site](#get-a-single-site)
+  - [Create a site](#create-a-site)
+  - [Update a site](#update-a-site)
+  - [Delete a site](#delete-a-site)
+  - [Registration token](#registration-token)
+  - [Duplicate a site](#duplicate-a-site)
+  - [Bulk update sites](#bulk-update-sites)
+  - [Local upgrade authorization](#local-upgrade-authorization)
+- [RBAC](#rbac)
+  - [List roles](#list-roles)
+  - [Get a role template (for building new roles)](#get-a-role-template-for-building-new-roles)
+  - [Get full permissions for a specific role](#get-full-permissions-for-a-specific-role)
+  - [Create a role](#create-a-role)
+  - [Update a role](#update-a-role)
+  - [Delete a role](#delete-a-role)
+- [Users](#users)
+  - [List users](#list-users)
+  - [Get a single user](#get-a-single-user)
+  - [Create a user](#create-a-user)
+  - [Update a user](#update-a-user)
+  - [Delete a user](#delete-a-user)
+  - [Two-factor authentication](#two-factor-authentication)
+  - [Password management](#password-management)
+  - [API token management](#api-token-management)
+  - [Authentication flows](#authentication-flows)
+- [Licenses](#licenses)
+  - [License types](#license-types)
+  - [Bundle, module, and setting helpers](#bundle-module-and-setting-helpers)
+  - [Replace all licenses on an account](#replace-all-licenses-on-an-account)
+  - [Replace all licenses on a site](#replace-all-licenses-on-a-site)
+  - [Create an account with licenses](#create-an-account-with-licenses)
+  - [Create a site with licenses](#create-a-site-with-licenses)
+  - [Bulk add or remove modules across sites](#bulk-add-or-remove-modules-across-sites)
+- [Complete example](#complete-example)
+- [API reference](#api-reference)
+- [Developer Notes](#developer-notes)
+- [Questions, Issues and Feature Requests](#questions-issues-and-feature-requests)
 
 ---
 
@@ -347,7 +419,7 @@ ctx := context.Background()
 
 // All active accounts
 accounts, pag, err := client.Accounts.List(ctx, &sentinelone.ListAccountsParams{
-    State: "active",
+    State: sentinelone.StateActive,
 })
 if err != nil {
     log.Fatal(err)
@@ -371,7 +443,7 @@ fmt.Println(account.Name, account.State)
 account, err := client.Accounts.Create(ctx, sentinelone.CreateAccountRequest{
     Data: sentinelone.CreateAccountData{
         Name:        "Acme Corp",
-        AccountType: "Paid",
+        AccountType: sentinelone.AccountTypePaid,
         Expiration:  sentinelone.StringPtr("2027-01-01T00:00:00Z"),
     },
 })
@@ -451,7 +523,7 @@ _, err = client.Accounts.Reactivate(ctx, account.ID, sentinelone.ReactivateAccou
 ```go
 resp, pag, err := client.Sites.List(ctx, &sentinelone.ListSitesParams{
     AccountID: "225494730938493804",
-    State:     "active",
+    State:     sentinelone.StateActive,
 })
 if err != nil {
     log.Fatal(err)
@@ -479,7 +551,7 @@ site, err := client.Sites.Create(ctx, sentinelone.CreateSiteRequest{
     Data: sentinelone.CreateSiteData{
         Name:                "Production East",
         AccountID:           "225494730938493804",
-        SiteType:            "Paid",
+        SiteType:            sentinelone.SiteTypePaid,
         SKU:                 "complete",
         UnlimitedExpiration: sentinelone.BoolPtr(true),
         UnlimitedLicenses:   sentinelone.BoolPtr(true),
@@ -850,59 +922,68 @@ err = client.Users.Logout(ctx)
 
 ## Licenses
 
-The SDK models the full license configuration block — bundles, surfaces, modules, and
-per-bundle settings — as typed structs with named constants for every known enum value.
+The SDK provides helper constructor functions for every known bundle SKU, add-on
+module, and license setting.  Use these helpers instead of constructing
+`LicensesInput` manually — they encode the correct surface names, API values, and
+field structure for each product, and their signatures make the intent obvious at
+the call site.
 
-### License type overview
+### License types
 
-| Type                | Purpose                                        |
-|---------------------|------------------------------------------------|
-| `LicensesInput`     | Top-level block; holds a slice of bundles      |
-| `LicenseBundleInput`| One SKU with its surfaces, modules, settings   |
-| `LicenseSurfaceInput`| Entitlement count for one deployment surface  |
-| `LicenseModuleItem` | An add-on module referenced by name            |
-| `LicenseSettingInput`| A per-bundle platform setting                 |
+| Type | Purpose |
+|---|---|
+| `LicensesInput` | Top-level license block passed to create/update calls |
+| `LicenseBundleInput` | One SKU with its entitlement surfaces |
+| `LicenseSurfaceInput` | Agent/endpoint/user/GB count for a surface |
+| `LicenseModuleItem` | An add-on module referenced by name |
+| `LicenseSettingInput` | A platform setting (retention, remote shell, etc.) |
 
-Named constants are provided for all known values:
+### Bundle, module, and setting helpers
 
-| Constant group   | Examples                                                          |
-|------------------|-------------------------------------------------------------------|
-| `Bundle*`        | `BundleCore`, `BundleComplete`, `BundleCWSServersControl`, …      |
-| `Surface*`       | `SurfaceTotalAgents`, `SurfaceTotalUsers`, `SurfaceAverageGBPerDay` |
-| `SurfaceUnlimitedCount` | `-1` — use as `Count` to grant unlimited entitlement      |
-| `Module*`        | `ModuleSTAR`, `ModuleRanger`, `ModuleVigilance`, …                |
-| `SettingGroup*`  | `SettingGroupDVRetention`, `SettingGroupAccountLevelRanger`, …    |
-| `Setting*`       | `SettingDVRetention90Days`, `SettingRangerLevelAccount`, …        |
+Every known bundle has a constructor that takes the entitlement count and returns
+a ready-to-use `LicenseBundleInput`:
+
+```go
+sentinelone.NewEndpointSecurityCoreBundleInput(500)
+sentinelone.NewEndpointSecurityCompleteBundleInput(sentinelone.LicenseSurfaceUnlimitedCount)
+sentinelone.NewDataIngestBundleInput(50, 0)   // avgGB/day, long-range query credits
+sentinelone.NewCWSForServersCompleteBundleInput(200)
+```
+
+Add-on modules and settings each have a zero-argument or single-argument
+constructor:
+
+```go
+sentinelone.NewNetworkDiscoveryModuleItem()
+sentinelone.NewVigilanceMDRModuleItem()
+sentinelone.NewWatchTowerModuleItem()
+
+sentinelone.NewXDRDataRetentionSettingInput(90)            // maps to nearest valid tier
+sentinelone.NewRemoteShellSettingInput(true)               // Enabled / Disabled
+sentinelone.NewNetworkDiscoveryConsolidationLevelSettingInput(sentinelone.LicenseSettingNetworkDiscoveryConsolidationLevelAccount)
+```
+
+Use `LicenseSurfaceUnlimitedCount` as the count value in any bundle constructor to
+grant unlimited entitlement for that surface.
 
 ### Replace all licenses on an account
 
-`UpdateLicenses` sends only the licenses field, leaving all other account fields
-unchanged. The API replaces the existing bundle set with exactly what you supply —
+`UpdateLicenses` sends only the licenses block, leaving all other account fields
+unchanged. The API replaces the full bundle set with exactly what you supply, so
 include every bundle you want to keep.
 
 ```go
 _, err = client.Accounts.UpdateLicenses(ctx, accountID, sentinelone.LicensesInput{
     Bundles: []sentinelone.LicenseBundleInput{
-        {
-            Name: sentinelone.BundleComplete,
-            Surfaces: []sentinelone.LicenseSurfaceInput{
-                {Name: sentinelone.SurfaceTotalAgents, Count: 500},
-            },
-            Modules: []sentinelone.LicenseModuleItem{
-                {Name: sentinelone.ModuleRanger},
-                {Name: sentinelone.ModuleSTAR},
-            },
-            Settings: []sentinelone.LicenseSettingInput{
-                {
-                    GroupName: sentinelone.SettingGroupDVRetention,
-                    Setting:   sentinelone.SettingDVRetention90Days,
-                },
-                {
-                    GroupName: sentinelone.SettingGroupAccountLevelRanger,
-                    Setting:   sentinelone.SettingRangerLevelAccount,
-                },
-            },
-        },
+        sentinelone.NewEndpointSecurityCompleteBundleInput(500),
+    },
+    Modules: []sentinelone.LicenseModuleItem{
+        sentinelone.NewNetworkDiscoveryModuleItem(),
+        sentinelone.NewWatchTowerModuleItem(),
+    },
+    Settings: []sentinelone.LicenseSettingInput{
+        sentinelone.NewXDRDataRetentionSettingInput(90),
+        sentinelone.NewNetworkDiscoveryConsolidationLevelSettingInput(sentinelone.LicenseSettingNetworkDiscoveryConsolidationLevelAccount),
     },
 })
 if err != nil {
@@ -915,27 +996,17 @@ if err != nil {
 ```go
 _, err = client.Sites.UpdateLicenses(ctx, siteID, sentinelone.LicensesInput{
     Bundles: []sentinelone.LicenseBundleInput{
-        {
-            Name: sentinelone.BundleControl,
-            Surfaces: []sentinelone.LicenseSurfaceInput{
-                {Name: sentinelone.SurfaceTotalAgents, Count: 100},
-            },
-        },
+        sentinelone.NewEndpointSecurityControlBundleInput(100),
     },
 })
 ```
 
-Use `SurfaceUnlimitedCount` to grant unlimited entitlement:
+Use `LicenseSurfaceUnlimitedCount` to grant unlimited entitlement:
 
 ```go
 _, err = client.Sites.UpdateLicenses(ctx, siteID, sentinelone.LicensesInput{
     Bundles: []sentinelone.LicenseBundleInput{
-        {
-            Name: sentinelone.BundleComplete,
-            Surfaces: []sentinelone.LicenseSurfaceInput{
-                {Name: sentinelone.SurfaceTotalAgents, Count: sentinelone.SurfaceUnlimitedCount},
-            },
-        },
+        sentinelone.NewEndpointSecurityCompleteBundleInput(sentinelone.LicenseSurfaceUnlimitedCount),
     },
 })
 ```
@@ -949,25 +1020,15 @@ creation time, avoiding a separate update call:
 account, err := client.Accounts.Create(ctx, sentinelone.CreateAccountRequest{
     Data: sentinelone.CreateAccountData{
         Name:        "Acme Corp",
-        AccountType: "Paid",
+        AccountType: sentinelone.AccountTypePaid,
         Licenses: &sentinelone.LicensesInput{
             Bundles: []sentinelone.LicenseBundleInput{
-                {
-                    Name: sentinelone.BundleComplete,
-                    Surfaces: []sentinelone.LicenseSurfaceInput{
-                        {Name: sentinelone.SurfaceTotalAgents, Count: 1000},
-                    },
-                    Modules: []sentinelone.LicenseModuleItem{
-                        {Name: sentinelone.ModuleRanger},
-                        {Name: sentinelone.ModuleBinaryVaultMalicious},
-                    },
-                },
-                {
-                    Name: sentinelone.BundleSingularityDataLake,
-                    Surfaces: []sentinelone.LicenseSurfaceInput{
-                        {Name: sentinelone.SurfaceAverageGBPerDay, Count: 50},
-                    },
-                },
+                sentinelone.NewEndpointSecurityCompleteBundleInput(1000),
+                sentinelone.NewDataIngestBundleInput(50, 0),
+            },
+            Modules: []sentinelone.LicenseModuleItem{
+                sentinelone.NewNetworkDiscoveryModuleItem(),
+                sentinelone.NewBinaryVaultBenignFilesModuleItem(),
             },
         },
     },
@@ -985,24 +1046,16 @@ site, err := client.Sites.Create(ctx, sentinelone.CreateSiteRequest{
     Data: sentinelone.CreateSiteData{
         Name:      "Production East",
         AccountID: accountID,
-        SiteType:  "Paid",
+        SiteType:  sentinelone.SiteTypePaid,
         Licenses: &sentinelone.LicensesInput{
             Bundles: []sentinelone.LicenseBundleInput{
-                {
-                    Name: sentinelone.BundleComplete,
-                    Surfaces: []sentinelone.LicenseSurfaceInput{
-                        {Name: sentinelone.SurfaceTotalAgents, Count: 200},
-                    },
-                    Modules: []sentinelone.LicenseModuleItem{
-                        {Name: sentinelone.ModuleVigilance},
-                    },
-                    Settings: []sentinelone.LicenseSettingInput{
-                        {
-                            GroupName: sentinelone.SettingGroupRemoteShellAvailability,
-                            Setting:   sentinelone.SettingRemoteShellEnabled,
-                        },
-                    },
-                },
+                sentinelone.NewEndpointSecurityCompleteBundleInput(200),
+            },
+            Modules: []sentinelone.LicenseModuleItem{
+                sentinelone.NewVigilanceMDRModuleItem(),
+            },
+            Settings: []sentinelone.LicenseSettingInput{
+                sentinelone.NewRemoteShellSettingInput(true),
             },
         },
     },
@@ -1011,21 +1064,21 @@ site, err := client.Sites.Create(ctx, sentinelone.CreateSiteRequest{
 
 ### Bulk add or remove modules across sites
 
-`Licenses.UpdateSitesModules` adds or removes add-on modules on all sites that
-match the filter in one API call:
+`Licenses.UpdateSitesModules` adds or removes add-on modules on all sites matching
+the filter in a single API call:
 
 ```go
-// Add the Ranger module to every active site in an account.
+// Add Network Discovery to every active site in an account.
 affected, err := client.Licenses.UpdateSitesModules(ctx, sentinelone.UpdateSitesModulesRequest{
     Data: sentinelone.UpdateSitesModulesData{
         Operation: "add",
         Modules: []sentinelone.LicenseModuleItem{
-            {Name: sentinelone.ModuleRanger},
+            sentinelone.NewNetworkDiscoveryModuleItem(),
         },
     },
     Filter: sentinelone.UpdateSitesModulesFilter{
         AccountIDs: []string{accountID},
-        State:      "active",
+        State:      sentinelone.StateActive,
     },
 })
 if err != nil {
@@ -1033,12 +1086,12 @@ if err != nil {
 }
 fmt.Printf("Updated %d site(s)\n", affected)
 
-// Remove Rogues from specific sites.
+// Remove Unprotected Endpoint Discovery from specific sites.
 affected, err = client.Licenses.UpdateSitesModules(ctx, sentinelone.UpdateSitesModulesRequest{
     Data: sentinelone.UpdateSitesModulesData{
         Operation: "remove",
         Modules: []sentinelone.LicenseModuleItem{
-            {Name: sentinelone.ModuleRogues},
+            sentinelone.NewUnprotectedEndpointDiscoveryModuleItem(),
         },
     },
     Filter: sentinelone.UpdateSitesModulesFilter{
@@ -1076,7 +1129,7 @@ func main() {
     var cursor *string
     for {
         accounts, pag, err := client.Accounts.List(ctx, &s1.ListAccountsParams{
-            State: "active",
+            State: s1.StateActive,
             ListParams: s1.ListParams{
                 Limit:  s1.IntPtr(100),
                 Cursor: cursor,
@@ -1123,4 +1176,28 @@ Full GoDoc is available locally:
 go doc github.com/s1buildpartners/sentinelone-go-sdk
 ```
 
-The [official SentinelOne API documentation](https://your-tenant.sentinelone.net/api-doc/overview) lists valid enum values, permission requirements, and request/response field descriptions for each endpoint.
+The official SentinelOne API documentation found in your SentinelOne console under **Help > API Hub** lists valid enum values, permission requirements, and request/response field descriptions for each endpoint.
+
+---
+
+## Developer Notes
+
+For consistency, security and best practices, the maintainers of this repository utilize the following toolset:
+
+- [Visual Studio Code IDE](https://https://code.visualstudio.com/) with the following extensions:
+  - [Claude Code for VS Code](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code)
+  - [Go](https://marketplace.cursorapi.com/items/?itemName=golang.Go)
+  - [Markdown All in One](https://marketplace.cursorapi.com/items/?itemName=yzhang.markdown-all-in-one)
+  - [markdownlint](https://marketplace.cursorapi.com/items/?itemName=DavidAnson.vscode-markdownlint)
+  - [YAML](https://marketplace.cursorapi.com/items/?itemName=redhat.vscode-yaml)
+- [golangci-lint](https://github.com/golangci/golangci-lint) for `.go` files
+- [markdownlint](https://github.com/davidanson/markdownlint) for `.md` files
+- [pre-commit](https://pre-commit.com/) for checks prior to commits
+- [govulncheck](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) for checking for Go vulnerabilities
+- [CodeQL](https://codeql.github.com/) for checking code quality and security
+
+---
+
+## Questions, Issues and Feature Requests
+
+If you have questions about this project, find a bug or wish to submit a feature request, please [submit an issue](https://github.com/s1buildpartners/sentinelone-go-sdk/issues).

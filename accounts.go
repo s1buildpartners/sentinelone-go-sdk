@@ -20,7 +20,6 @@ type AccountsClient struct{ c *Client }
 // filtered by the optional params.
 //
 // API: GET /web/api/v2.1/accounts
-// Required permission: Accounts.view
 //
 // Pass nil for params to use the API defaults (limit 10, no filters).
 // Use [types.Pagination].NextCursor for subsequent pages.
@@ -46,7 +45,6 @@ func (a *AccountsClient) List(
 // Get returns the account with the given accountID.
 //
 // API: GET /web/api/v2.1/accounts/{account_id}
-// Required permission: Accounts.view
 func (a *AccountsClient) Get(ctx context.Context, accountID string) (*types.Account, error) {
 	var account types.Account
 
@@ -61,9 +59,8 @@ func (a *AccountsClient) Get(ctx context.Context, accountID string) (*types.Acco
 // Create creates a new account under the tenant.
 //
 // API: POST /web/api/v2.1/accounts
-// Required permission: Accounts.create
 //
-// The Name field in req.Data is required.  AccountType ("Trial" or "Paid")
+// The Name field in req.Data is required.  AccountType ([AccountTypeTrial] or [AccountTypePaid])
 // and Expiration are optional; omit Expiration or set UnlimitedExpiration true
 // for accounts that should never expire.
 func (a *AccountsClient) Create(ctx context.Context, req CreateAccountRequest) (*types.Account, error) {
@@ -80,7 +77,6 @@ func (a *AccountsClient) Create(ctx context.Context, req CreateAccountRequest) (
 // Update updates mutable fields on an existing account.
 //
 // API: PUT /web/api/v2.1/accounts/{account_id}
-// Required permission: Accounts.update
 //
 // Only fields set in req.Data are sent; zero values are omitted.  To update
 // the security policy in the same call, populate req.Data.Policy.
@@ -104,7 +100,6 @@ func (a *AccountsClient) Update(
 // are reflected in the returned [types.Policy].
 //
 // API: GET /web/api/v2.1/accounts/{account_id}/policy
-// Required permission: Accounts.editPolicy
 func (a *AccountsClient) GetPolicy(ctx context.Context, accountID string) (*types.Policy, error) {
 	var policy types.Policy
 
@@ -121,7 +116,6 @@ func (a *AccountsClient) GetPolicy(ctx context.Context, accountID string) (*type
 // it to follow the global policy; this call overrides individual fields.
 //
 // API: PUT /web/api/v2.1/accounts/{account_id}/policy
-// Required permission: Accounts.editPolicy
 func (a *AccountsClient) UpdatePolicy(
 	ctx context.Context,
 	accountID string,
@@ -141,7 +135,6 @@ func (a *AccountsClient) UpdatePolicy(
 // to inherit the global tenant policy again.
 //
 // API: PUT /web/api/v2.1/accounts/{account_id}/revert-policy
-// Required permission: Accounts.revertPolicy
 func (a *AccountsClient) RevertPolicy(ctx context.Context, accountID string) error {
 	_, err := a.c.put(ctx, accountsBasePath+accountID+"/revert-policy", RevertPolicyRequest{}, nil)
 
@@ -153,7 +146,6 @@ func (a *AccountsClient) RevertPolicy(ctx context.Context, accountID string) err
 // req.Data; at least one must be supplied.
 //
 // API: PUT /web/api/v2.1/accounts/{account_id}/reactivate
-// Required permission: Accounts.reactivate
 func (a *AccountsClient) Reactivate(ctx context.Context, accountID string, req ReactivateAccountRequest) (
 	*types.Account, error,
 ) {
@@ -171,7 +163,6 @@ func (a *AccountsClient) Reactivate(ctx context.Context, accountID string, req R
 // without waiting for its scheduled expiration date.
 //
 // API: POST /web/api/v2.1/accounts/{account_id}/expire-now
-// Required permission: Accounts.expire
 func (a *AccountsClient) ExpireNow(ctx context.Context, accountID string) error {
 	_, err := a.c.post(ctx, accountsBasePath+accountID+"/expire-now", struct{}{}, nil)
 
@@ -184,7 +175,6 @@ func (a *AccountsClient) ExpireNow(ctx context.Context, accountID string) error 
 // when the actual value is needed.
 //
 // API: GET /web/api/v2.1/accounts/{account_id}/uninstall-password/metadata
-// Required permission: Accounts.uninstallPassword.view
 func (a *AccountsClient) GetUninstallPasswordMetadata(ctx context.Context, accountID string) (
 	*types.UninstallPasswordMetadata, error,
 ) {
@@ -203,7 +193,6 @@ func (a *AccountsClient) GetUninstallPasswordMetadata(ctx context.Context, accou
 // hold the appropriate permission.
 //
 // API: GET /web/api/v2.1/accounts/{account_id}/uninstall-password/view
-// Required permission: Accounts.uninstallPassword.view
 func (a *AccountsClient) ViewUninstallPassword(
 	ctx context.Context,
 	accountID string,
@@ -223,7 +212,6 @@ func (a *AccountsClient) ViewUninstallPassword(
 // returned in the response; store it securely as it cannot be retrieved again.
 //
 // API: POST /web/api/v2.1/accounts/{account_id}/uninstall-password/generate
-// Required permission: Accounts.uninstallPassword.manage
 func (a *AccountsClient) GenerateUninstallPassword(
 	ctx context.Context,
 	accountID string,
@@ -244,7 +232,6 @@ func (a *AccountsClient) GenerateUninstallPassword(
 // the revocation propagates.
 //
 // API: POST /web/api/v2.1/accounts/{account_id}/uninstall-password/revoke
-// Required permission: Accounts.uninstallPassword.manage
 func (a *AccountsClient) RevokeUninstallPassword(ctx context.Context, accountID string) error {
 	_, err := a.c.post(ctx, accountsBasePath+accountID+"/uninstall-password/revoke",
 		RevokeUninstallPasswordRequest{}, nil)
@@ -258,7 +245,6 @@ func (a *AccountsClient) RevokeUninstallPassword(ctx context.Context, accountID 
 // include the existing bundles plus the new one.  To remove a bundle, omit it.
 //
 // API: PUT /web/api/v2.1/accounts/{account_id}
-// Required permission: Accounts.update
 func (a *AccountsClient) UpdateLicenses(
 	ctx context.Context,
 	accountID string,

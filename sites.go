@@ -15,7 +15,6 @@ type SitesClient struct{ c *Client }
 // List returns a paginated list of sites visible to the authenticated user.
 //
 // API: GET /web/api/v2.1/sites
-// Required permission: Sites.view
 //
 // The response wraps both an aggregate (AllSites totals) and the per-site
 // slice in [types.SitesResponse].  Pass nil for params to use API defaults.
@@ -41,7 +40,6 @@ func (s *SitesClient) List(
 // Get returns the site with the given siteID.
 //
 // API: GET /web/api/v2.1/sites/{site_id}
-// Required permission: Sites.view
 func (s *SitesClient) Get(ctx context.Context, siteID string) (*types.Site, error) {
 	var site types.Site
 
@@ -56,9 +54,8 @@ func (s *SitesClient) Get(ctx context.Context, siteID string) (*types.Site, erro
 // Create creates a new site inside the specified account.
 //
 // API: POST /web/api/v2.1/sites
-// Required permission: Sites.create
 //
-// Name and AccountID in req.Data are required.  SiteType ("Trial" or "Paid"),
+// Name and AccountID in req.Data are required.  SiteType ([SiteTypeTrial] or [SiteTypePaid]),
 // SKU, and license counts are optional.  Omit Expiration or set
 // UnlimitedExpiration true for sites that should never expire.
 func (s *SitesClient) Create(ctx context.Context, req CreateSiteRequest) (*types.Site, error) {
@@ -75,7 +72,6 @@ func (s *SitesClient) Create(ctx context.Context, req CreateSiteRequest) (*types
 // Update updates mutable fields on an existing site.
 //
 // API: PUT /web/api/v2.1/sites/{site_id}
-// Required permission: Sites.update
 //
 // Only non-zero fields in req.Data are applied.  To update the site's security
 // policy in the same call, populate req.Data.Policy.
@@ -94,7 +90,6 @@ func (s *SitesClient) Update(ctx context.Context, siteID string, req UpdateSiteR
 // any agents assigned to the site will need to be reassigned.
 //
 // API: DELETE /web/api/v2.1/sites/{site_id}
-// Required permission: Sites.delete
 func (s *SitesClient) Delete(ctx context.Context, siteID string) error {
 	_, err := s.c.delete(ctx, "/sites/"+siteID, nil)
 
@@ -105,7 +100,6 @@ func (s *SitesClient) Delete(ctx context.Context, siteID string) error {
 // If the site inherits from its account, the inherited values are reflected.
 //
 // API: GET /web/api/v2.1/sites/{site_id}/policy
-// Required permission: Sites.editPolicy
 func (s *SitesClient) GetPolicy(ctx context.Context, siteID string) (*types.Policy, error) {
 	var policy types.Policy
 
@@ -121,7 +115,6 @@ func (s *SitesClient) GetPolicy(ctx context.Context, siteID string) (*types.Poli
 // inherited account-level settings for the fields provided.
 //
 // API: PUT /web/api/v2.1/sites/{site_id}/policy
-// Required permission: Sites.editPolicy
 func (s *SitesClient) UpdatePolicy(ctx context.Context, siteID string, req UpdatePolicyRequest) (*types.Policy, error) {
 	var policy types.Policy
 
@@ -137,7 +130,6 @@ func (s *SitesClient) UpdatePolicy(ctx context.Context, siteID string, req Updat
 // inherit its account's policy again.
 //
 // API: PUT /web/api/v2.1/sites/{site_id}/revert-policy
-// Required permission: Sites.revertPolicy
 func (s *SitesClient) RevertPolicy(ctx context.Context, siteID string) error {
 	_, err := s.c.put(ctx, fmt.Sprintf("/sites/%s/revert-policy", siteID), RevertPolicyRequest{}, nil)
 
@@ -148,7 +140,6 @@ func (s *SitesClient) RevertPolicy(ctx context.Context, siteID string) error {
 // Agents use this token to self-register into the site.
 //
 // API: GET /web/api/v2.1/sites/{site_id}/token
-// Required permission: Sites.view
 func (s *SitesClient) GetToken(ctx context.Context, siteID string) (*types.SiteToken, error) {
 	var token types.SiteToken
 
@@ -165,7 +156,6 @@ func (s *SitesClient) GetToken(ctx context.Context, siteID string) (*types.SiteT
 // must use the token from the returned [types.SiteKey].
 //
 // API: PUT /web/api/v2.1/sites/{site_id}/regenerate-key
-// Required permission: Sites.regenerateKey
 func (s *SitesClient) RegenerateKey(ctx context.Context, siteID string) (*types.SiteKey, error) {
 	var key types.SiteKey
 
@@ -181,7 +171,6 @@ func (s *SitesClient) RegenerateKey(ctx context.Context, siteID string) (*types.
 // Either req.Data.Expiration or req.Data.UnlimitedExpiration must be set.
 //
 // API: PUT /web/api/v2.1/sites/{site_id}/reactivate
-// Required permission: Sites.reactivate
 func (s *SitesClient) Reactivate(ctx context.Context, siteID string, req ReactivateSiteRequest) (*types.Site, error) {
 	var site types.Site
 
@@ -197,7 +186,6 @@ func (s *SitesClient) Reactivate(ctx context.Context, siteID string, req Reactiv
 // waiting for its scheduled expiration date.
 //
 // API: POST /web/api/v2.1/sites/{site_id}/expire-now
-// Required permission: Sites.expire
 func (s *SitesClient) ExpireNow(ctx context.Context, siteID string) error {
 	_, err := s.c.post(ctx, fmt.Sprintf("/sites/%s/expire-now", siteID), struct{}{}, nil)
 
@@ -209,7 +197,6 @@ func (s *SitesClient) ExpireNow(ctx context.Context, siteID string) error {
 // locally until the authorization expiry date.
 //
 // API: GET /web/api/v2.1/sites/{site_id}/local-authorization
-// Required permission: Sites.localAuthorization
 func (s *SitesClient) GetLocalAuthorization(ctx context.Context, siteID string) (*types.LocalAuthorization, error) {
 	var auth types.LocalAuthorization
 
@@ -226,7 +213,6 @@ func (s *SitesClient) GetLocalAuthorization(ctx context.Context, siteID string) 
 // timestamp to grant authorization until that date, or to nil to revoke it.
 //
 // API: PUT /web/api/v2.1/sites/{site_id}/local-authorization
-// Required permission: Sites.localAuthorization
 func (s *SitesClient) UpdateLocalAuthorization(
 	ctx context.Context,
 	siteID string,
@@ -248,7 +234,6 @@ func (s *SitesClient) UpdateLocalAuthorization(
 // source site's security policy.
 //
 // API: POST /web/api/v2.1/sites/duplicate-site
-// Required permission: Sites.create
 func (s *SitesClient) Duplicate(ctx context.Context, req DuplicateSiteRequest) (*types.Site, error) {
 	var site types.Site
 
@@ -265,7 +250,6 @@ func (s *SitesClient) Duplicate(ctx context.Context, req DuplicateSiteRequest) (
 // or req.Filter.AccountIDs to narrow the target set.
 //
 // API: PUT /web/api/v2.1/sites/update-bulk
-// Required permission: Sites.update
 func (s *SitesClient) BulkUpdate(ctx context.Context, req BulkUpdateSitesRequest) error {
 	_, err := s.c.put(ctx, "/sites/update-bulk", req, nil)
 
@@ -278,7 +262,6 @@ func (s *SitesClient) BulkUpdate(ctx context.Context, req BulkUpdateSitesRequest
 // include the existing bundles plus the new one.  To remove a bundle, omit it.
 //
 // API: PUT /web/api/v2.1/sites/{site_id}
-// Required permission: Sites.update
 func (s *SitesClient) UpdateLicenses(
 	ctx context.Context,
 	siteID string,

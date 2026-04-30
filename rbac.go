@@ -15,7 +15,6 @@ type RBACClient struct{ c *Client }
 // user, filtered by the optional params.
 //
 // API: GET /web/api/v2.1/rbac/roles
-// Required permission: Roles.view
 //
 // By default the API includes parent-scope roles.  Set IncludeChildren true to
 // also surface roles defined in child scopes (accounts, sites).
@@ -41,7 +40,6 @@ func (r *RBACClient) List(ctx context.Context, params *ListRolesParams) ([]types
 // permission identifiers to [RBACClient.Create] via CreateRoleData.PermissionIDs.
 //
 // API: GET /web/api/v2.1/rbac/role
-// Required permission: Roles.create (or Roles.view for read access to the template)
 func (r *RBACClient) GetTemplate(
 	ctx context.Context,
 	params *GetRoleTemplateParams,
@@ -66,7 +64,6 @@ func (r *RBACClient) GetTemplate(
 // no additional scope filtering is required.
 //
 // API: GET /web/api/v2.1/rbac/role/{role_id}
-// Required permission: Roles.view
 func (r *RBACClient) Get(
 	ctx context.Context,
 	roleID string,
@@ -94,7 +91,6 @@ func (r *RBACClient) Get(
 // permissions enabled.
 //
 // API: POST /web/api/v2.1/rbac/role
-// Required permission: Roles.create
 func (r *RBACClient) Create(ctx context.Context, req CreateRoleRequest) (*types.Role, error) {
 	var role types.Role
 
@@ -110,7 +106,6 @@ func (r *RBACClient) Create(ctx context.Context, req CreateRoleRequest) (*types.
 // custom RBAC role.  Predefined (system) roles cannot be updated.
 //
 // API: PUT /web/api/v2.1/rbac/role/{role_id}
-// Required permission: Roles.update
 func (r *RBACClient) Update(ctx context.Context, roleID string, req UpdateRoleRequest) (*types.Role, error) {
 	var role types.Role
 
@@ -127,7 +122,6 @@ func (r *RBACClient) Update(ctx context.Context, roleID string, req UpdateRoleRe
 // deleted.
 //
 // API: DELETE /web/api/v2.1/rbac/role/{role_id}
-// Required permission: Roles.delete
 func (r *RBACClient) Delete(ctx context.Context, roleID string) error {
 	_, err := r.c.delete(ctx, "/rbac/role/"+roleID, DeleteRoleRequest{})
 

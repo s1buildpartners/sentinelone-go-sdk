@@ -14,7 +14,6 @@ type LicensesClient struct{ c *Client }
 // matching the supplied filter.
 //
 // API: PUT /web/api/v2.1/licenses/update-sites-modules
-// Required permission: Sites.edit
 //
 // Set req.Data.Operation to "add" or "remove".  Populate req.Data.Modules with
 // the module names to affect (e.g. "star", "rso").  Populate req.Filter with
@@ -35,4 +34,14 @@ func (l *LicensesClient) UpdateSitesModules(
 	}
 
 	return result.Affected, nil
+}
+
+// IsBundleDeprecated reports whether the given bundle name is deprecated.
+func IsBundleDeprecated(name string) bool {
+	return name == LicenseBundleLogAnalytics
+}
+
+// IsModuleDeprecated reports whether the given module name is deprecated.
+func IsModuleDeprecated(name string) bool {
+	return name == LicenseModuleRemoteOpsForensics
 }

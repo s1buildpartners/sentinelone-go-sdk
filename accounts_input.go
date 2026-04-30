@@ -6,6 +6,12 @@ import (
 	"github.com/s1buildpartners/sentinelone-go-sdk/types"
 )
 
+// AccountTypeTrial and AccountTypePaid are the valid values for AccountType fields.
+const (
+	AccountTypeTrial = "Trial"
+	AccountTypePaid  = "Paid"
+)
+
 // CreateAccountRequest is the request body for POST /accounts.
 type CreateAccountRequest struct {
 	Data CreateAccountData `json:"data"`
@@ -66,8 +72,8 @@ type RevokeUninstallPasswordRequest struct {
 //   - IDs / AccountIDs: filter to specific account IDs (max 5,000 per request).
 //   - Query: full-text search on account name.
 //   - Name: exact name match.
-//   - AccountType: "Trial" or "Paid".
-//   - State: "active", "expired", or "deleted".
+//   - AccountType: [AccountTypeTrial] or [AccountTypePaid].
+//   - State: [StateActive], [StateExpired], or [StateDeleted].
 //   - States / StatesNin: include or exclude multiple states.
 //   - Features: filter accounts that support a feature ("firewall-control", etc.).
 //   - UsageType: "customer", "mssp", or "ir".
@@ -82,8 +88,8 @@ type ListAccountsParams struct {
 	Query        string
 	Name         string
 	IsDefault    *bool
-	AccountType  string // Trial, Paid
-	State        string // active, expired, deleted
+	AccountType  string // [AccountTypeTrial], [AccountTypePaid]
+	State        string // [StateActive], [StateExpired], [StateDeleted]
 	States       []string
 	StatesNin    []string
 	Features     []string

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -40,6 +41,7 @@ type Client struct {
 	httpClient *http.Client
 	rateLimits []pathRateLimit // nil = disabled; sorted longest-prefix-first
 	maxRetries int             // max 429 retry attempts; default 3
+	logger     *slog.Logger
 
 	Accounts *AccountsClient
 	Sites    *SitesClient
@@ -89,6 +91,14 @@ func WithMaxRetries(n int) ClientOption {
 	return func(c *Client) { c.maxRetries = n }
 }
 
+// WithLogger sets the [log/slog.Logger] used by the client for structured
+// diagnostic output.  By default all log output is discarded.  Pass your
+// application's logger to surface request traces, retry warnings, and API
+// error details.
+func WithLogger(l *slog.Logger) ClientOption {
+	return func(c *Client) { c.logger = l }
+}
+
 // NewClient creates a new SentinelOne Management API client.
 //
 // baseURL is the root URL of the management console, for example
@@ -109,6 +119,7 @@ func NewClient(baseURL, apiToken string, opts ...ClientOption) *Client {
 		},
 		rateLimits: buildDefaultRateLimits(),
 		maxRetries: defaultMaxRetries,
+		logger:     slog.New(slog.DiscardHandler),
 	}
 	for _, o := range opts {
 		o(cli)
@@ -164,12 +175,14 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 	var bodyBytes []byte
 
 	if body != nil {
-		b, err := json.Marshal(body)
+		result, err := json.Marshal(body)
 		if err != nil {
+			c.logger.Error("failed to marshal request body", "method", method, "path", path, "error", err)
+
 			return nil, fmt.Errorf("%s marshal request: %w", errTag, err)
 		}
 
-		bodyBytes = b
+		bodyBytes = result
 	}
 
 	for attempt := 0; ; attempt++ {
@@ -177,8 +190,12 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 		lim := c.limiterFor(path)
 
 		if lim != nil {
+			c.logger.Debug("waiting for rate limit token", "path", path)
+
 			err := lim.Wait(ctx)
 			if err != nil {
+				c.logger.Warn("rate limit wait interrupted", "path", path, "error", err)
+
 				return nil, fmt.Errorf("%s rate limit wait: %w", errTag, err)
 			}
 		}
@@ -190,6 +207,8 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 
 		req, err := http.NewRequestWithContext(ctx, method, c.buildURL(path, params), bodyReader)
 		if err != nil {
+			c.logger.Error("failed to build request", "method", method, "path", path, "error", err)
+
 			return nil, fmt.Errorf("%s build request: %w", errTag, err)
 		}
 
@@ -199,8 +218,12 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 			req.Header.Set(contentTypeHeader, contentTypeJSON)
 		}
 
+		c.logger.Debug("sending API request", "method", method, "path", path, "attempt", attempt+1)
+
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
+			c.logger.Error("HTTP request failed", "method", method, "path", path, "attempt", attempt+1, "error", err)
+
 			return nil, fmt.Errorf("%s HTTP request: %w", errTag, err)
 		}
 
@@ -210,12 +233,17 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 		_ = resp.Body.Close()
 
 		if readErr != nil {
+			c.logger.Error("failed to read response body", "method", method, "path", path, "status", resp.StatusCode,
+				"error", readErr)
+
 			return nil, fmt.Errorf("%s read response: %w", errTag, readErr)
 		}
 
 		// Reactive rate limiting — honour 429 and retry up to maxRetries times.
 		if resp.StatusCode == http.StatusTooManyRequests && attempt < c.maxRetries {
 			wait := retryAfterDuration(resp)
+			c.logger.Warn("request rate-limited, backing off", "method", method, "path", path, "attempt", attempt+1,
+				"retry_after", wait)
 
 			select {
 			case <-time.After(wait):
@@ -227,12 +255,20 @@ func (c *Client) do(ctx context.Context, method, path string, params url.Values,
 
 		raw, err := c.decodeRawResponse(respBody, out)
 		if err != nil {
+			c.logger.Error("failed to decode API response", "method", method, "path", path, "status", resp.StatusCode,
+				"error", err)
+
 			return nil, err
 		}
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			return nil, &types.ResponseError{StatusCode: resp.StatusCode, Errors: parseErrors(raw.Errors)}
+			apiErr := &types.ResponseError{StatusCode: resp.StatusCode, Errors: parseErrors(raw.Errors)}
+			c.logger.Warn("API returned non-2xx response", "method", method, "path", path, "status", resp.StatusCode)
+
+			return nil, apiErr
 		}
+
+		c.logger.Debug("API request completed", "method", method, "path", path, "status", resp.StatusCode)
 
 		return raw.Pagination, nil
 	}

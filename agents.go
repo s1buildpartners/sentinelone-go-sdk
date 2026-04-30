@@ -19,7 +19,6 @@ type AgentsClient struct{ c *Client }
 // filtered by the optional params.
 //
 // API: GET /web/api/v2.1/agents
-// Required permission: Agents.view
 //
 // Pass nil for params to use the API defaults (limit 10, no filters).
 // Use [types.Pagination].NextCursor for subsequent pages.
@@ -46,7 +45,6 @@ func (a *AgentsClient) List(
 // Count returns the total number of agents matching the given filter.
 //
 // API: GET /web/api/v2.1/agents/count
-// Required permission: Agents.view
 //
 // Pass nil to count all agents visible to the caller.
 func (a *AgentsClient) Count(ctx context.Context, params *ListAgentsParams) (int, error) {

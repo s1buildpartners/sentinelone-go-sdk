@@ -1,5 +1,118 @@
 package sentinelone
 
+import "strings"
+
+const (
+	// LicenseSurfaceUnlimitedCount is the sentinel value for an unlimited entitlement count in a
+	// [LicenseSurfaceInput].
+	LicenseSurfaceUnlimitedCount = -1
+)
+
+// License surface strings must match exactly the API's expected values; use the constants provided in this package
+// (e.g. [LicenseSurfaceTotalAgents]) rather than hardcoding strings in your code.  The API is case-sensitive and
+// rejects requests with unrecognized surface names, so these constants must be used as-is without modification
+// (e.g. no title-casing).
+const (
+	LicenseSurfaceTotalAgents           = "Total Agents"
+	LicenseSurfaceTotalEndpoints        = "Total Endpoints"
+	LicenseSurfaceTotalUsers            = "Total Users"
+	LicenseSurfaceAvgGBDay              = "Average GB per Day"
+	LicenseSurfaceWorkloads             = "Workloads"
+	LicenseSurfaceLongRangeQueryCredits = "Long Range Query Credits"
+	LicenseSurfaceActionPacks           = "Action Packs"
+)
+
+// License bundle names must match exactly the API's expected values; use the constants provided in this package
+// (e.g. [LicenseBundleEndpointSecurityComplete]) rather than hardcoding strings in your code.  The API is
+// case-sensitive and rejects requests with unrecognized bundle names, so these constants must be used as-is without
+// modification (e.g. no title-casing).
+//
+// Use the New*BundleInput functions (e.g. [NewEndpointSecurityCompleteBundleInput]) to create bundles with the
+// correct name and surfaces.
+const (
+	LicenseBundleThreatDetectionNetApp              = "threat_detection_netapp"
+	LicenseBundleThreatDetectionDataStores          = "threat_detection_s3"
+	LicenseBundleMobileSecurity                     = "mobile_security"
+	LicenseBundleLogAnalytics                       = "log_analytics"
+	LicenseBundleIdentityThreatProtection           = "identity_threat_protection"
+	LicenseBundleIdentitySecurityPostureManagement  = "ranger_ad"
+	LicenseBundleIdentitySecurityForIDP             = "ranger_ad_protect"
+	LicenseBundleUnifiedIdentity                    = "unified_identity"
+	LicenseBundleIdentityDetectionResponse          = "singularity_identity"
+	LicenseBundleHyperautomation                    = "hyperautomation"
+	LicenseBundleEndpointSecurityCore               = "core"
+	LicenseBundleEndpointSecurityComplete           = "complete"
+	LicenseBundleEndpointSecurityControl            = "control"
+	LicenseBundleDataIngest                         = "data_ingest"
+	LicenseBundleCWSForServersControl               = "cloud_workload_security_servers_control"
+	LicenseBundleCWSForServersComplete              = "cloud_workload_security_servers_complete"
+	LicenseBundleCWSForServerlessContainersControl  = "cloud_workload_security_serverless_containers_control"
+	LicenseBundleCWSForServerlessContainersComplete = "cloud_workload_security_serverless_containers_complete"
+	LicenseBundleCWSForContainersControl            = "cloud_workload_security_containers_control"
+	LicenseBundleCWSForContainersComplete           = "cloud_workload_security_containers_complete"
+	LicenseBundleCNSPro                             = "cloud_native_security_pro"
+	LicenseBundleCNSFoundations                     = "cloud_native_security_foundations"
+)
+
+// License module names must match exactly the API's expected values; use the constants provided in this package
+// (e.g. [LicenseModuleDataIngest30d]) rather than hardcoding strings in your code.  The API is case-sensitive and
+// rejects requests with unrecognized module names, so these constants must be used as-is without modification
+// (e.g. no title-casing).
+//
+// Use the New*ModuleInput functions (e.g. [NewDataIngestModuleInput]) to create modules with the correct name.
+const (
+	LicenseModuleDataIngest30d                     = "xdr_30d_retention"
+	LicenseModuleDataIngest90d                     = "xdr_90d_retention"
+	LicenseModuleDataIngest180d                    = "xdr_180d_retention"
+	LicenseModuleDataIngest365d                    = "xdr_365d_retention"
+	LicenseModuleDataIngestLongRangeRetention1y    = "xdr_extended_365d_retention"
+	LicenseModuleDataIngestLongRangeRetention2y    = "xdr_extended_730d_retention"
+	LicenseModuleDataIngestLongRangeRetention3y    = "xdr_extended_1095d_retention"
+	LicenseModuleDataIngestLongRangeRetention4y    = "xdr_extended_1460d_retention"
+	LicenseModuleDataIngestLongRangeRetention5y    = "xdr_extended_1825d_retention"
+	LicenseModuleCloudFunnel                       = "cloud_funnel"
+	LicenseModuleVigilanceMDR                      = "vigilance"
+	LicenseModuleBinaryVaultBenignFiles            = "binary_vault_benign"
+	LicenseModuleDataIngestLongRangeEndpointAndCWS = "xdr_edr_cws_retention"
+	LicenseModuleNetworkDiscovery                  = "ranger"
+	LicenseModuleSingularityMDR                    = "singularity_mdr"
+	LicenseModuleThreatIntel                       = "threat_intel"
+	LicenseModulePurpleAIFoundations               = "purple_ai"
+	LicenseModulePurpleAISocAnalyst                = "purple_ai_soc_analyst"
+	LicenseModuleWatchTower                        = "watchtower"
+	LicenseModuleVulnerabilityManagement           = "vulnerability_management"
+	LicenseModuleUnprotectedEndpointDiscovery      = "rogues"
+	LicenseModuleRemoteScriptOrchestration         = "rso"
+	LicenseModuleWayfinderElite                    = "wayfinder_mdr_elite"
+	LicenseModuleWayfinderEssentials               = "wayfinder_mdr_essentials"
+	LicenseModuleWayfinderThreatHunting            = "wayfinder_threat_hunting"
+	LicenseModuleRemoteOpsForensics                = "remote_ops_forensics"
+)
+
+// License setting group and setting names must match exactly the API's expected values; use the constants provided
+// in this package.  The API is case-sensitive and rejects requests with unrecognized setting group or setting names,
+// so these constants must be used as-is without modification (e.g. no title-casing).
+//
+// Use the New*SettingInput functions (e.g. [NewXDRDataRetentionSettingInput]) to create settings with the correct
+// group and setting names and values.
+const (
+	LicenseSettingXDRDataRetention                   = "dv_retention"
+	LicenseSettingEDRDataRetention                   = "malicious_data_retention"
+	LicenseSettingRemoteShell                        = "remote_shell_availability"
+	LicenseSettingMarketplaceAccess                  = "marketplace_access_status"
+	LicenseSettingNetworkDiscoveryConsolidationLevel = "account_level_ranger"
+	LicenseSettingIdentitySecurityPostureMode        = "ranger_ad_mode"
+)
+
+// License setting value constants for [LicenseSettingNetworkDiscoveryConsolidationLevel] and
+// [LicenseSettingIdentitySecurityPostureMode].
+const (
+	LicenseSettingNetworkDiscoveryConsolidationLevelAccount = "Account"
+	LicenseSettingNetworkDiscoveryConsolidationLevelSite    = "Site"
+	LicenseSettingIdentitySecurityPostureModeFull           = "Full"
+	LicenseSettingIdentitySecurityPostureModeLite           = "Lite"
+)
+
 // UpdateSitesModulesRequest is the request body for
 // PUT /web/api/v2.1/licenses/update-sites-modules.
 type UpdateSitesModulesRequest struct {
@@ -26,8 +139,8 @@ type UpdateSitesModulesData struct {
 //   - SiteIDs / AccountIDs: select sites directly or by owning account.
 //   - Query: full-text search on name, account name, and description.
 //   - Name: exact site name match.
-//   - State: "active", "expired", or "deleted".
-//   - SiteType: "Trial" or "Paid".
+//   - State: [StateActive], [StateExpired], or [StateDeleted].
+//   - SiteType: [SiteTypeTrial] or [SiteTypePaid].
 type UpdateSitesModulesFilter struct {
 	SiteIDs    []string `json:"siteIds,omitempty"`
 	AccountIDs []string `json:"accountIds,omitempty"`
@@ -47,24 +160,26 @@ type UpdateSitesModulesFilter struct {
 // Use either legacy SKUs or LicensesInput.Bundles, not both, in the same
 // request.  Each bundle must include at least one surface entry.
 type LicensesInput struct {
-	Bundles []LicenseBundleInput `json:"bundles,omitempty"`
+	Bundles          []LicenseBundleInput  `json:"bundles,omitempty"`
+	MakeSocDefaultUI *bool                 `json:"makeSocDefaultUi,omitempty"`
+	Modules          []LicenseModuleItem   `json:"modules,omitempty"`
+	Name             *string               `json:"name,omitempty"`
+	Settings         []LicenseSettingInput `json:"settings,omitempty"`
 }
 
 // LicenseBundleInput describes a single SKU and its configuration within a
 // [LicensesInput] request.
 //
-// Name is required; use one of the Bundle* constants (e.g. [BundleComplete]).
+// Name is required; use one of the Bundle* variables (e.g. [BundleComplete]).
 // Surfaces is required; include at least one [LicenseSurfaceInput].
 // Modules and Settings are optional per-bundle add-ons and platform overrides.
 //
-// MajorVersion is almost always omitted; the management console selects the
-// latest available version automatically when it is absent.
+// MajorVersion and MinorVersion are almost always omitted; the management
+// console selects the latest available version automatically when absent.
 type LicenseBundleInput struct {
 	Name         string                `json:"name"`
 	MajorVersion *int                  `json:"majorVersion,omitempty"`
 	Surfaces     []LicenseSurfaceInput `json:"surfaces"`
-	Modules      []LicenseModuleItem   `json:"modules,omitempty"`
-	Settings     []LicenseSettingInput `json:"settings,omitempty"`
 }
 
 // LicenseSurfaceInput describes the entitlement count for a single deployment
@@ -79,7 +194,7 @@ type LicenseSurfaceInput struct {
 }
 
 // LicenseModuleItem identifies an add-on module by name.
-// Use one of the Module* constants (e.g. [ModuleSTAR]) for the Name field.
+// Use one of the Module* variables (e.g. [ModuleSTAR]) for the Name field.
 // LicenseModuleItem is used both inside [LicenseBundleInput.Modules] and in
 // [UpdateSitesModulesData.Modules].
 type LicenseModuleItem struct {
@@ -87,146 +202,665 @@ type LicenseModuleItem struct {
 }
 
 // LicenseSettingInput is a platform-level setting linked to a [LicenseBundleInput].
-// GroupName must be one of the SettingGroup* constants;
+// GroupName must be one of the SettingGroup* variables;
 // Setting must be one of the corresponding Setting* constants.
 type LicenseSettingInput struct {
 	GroupName string `json:"groupName"`
 	Setting   string `json:"setting"`
 }
 
-// SurfaceUnlimitedCount is the sentinel value for [LicenseSurfaceInput.Count]
-// that grants unlimited entitlement for that surface.
-const SurfaceUnlimitedCount = -1
+// NewThreatDetectionForNetAppBundleInput creates a [LicenseBundleInput] for the Threat Detection for NetApp bundle
+// with the specified total endpoints.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited endpoints.
+func NewThreatDetectionForNetAppBundleInput(totalEndpoints int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalEndpoints,
+		},
+	}
 
-// ---- Bundle (SKU) name constants ----
+	return LicenseBundleInput{
+		Name:     LicenseBundleThreatDetectionNetApp,
+		Surfaces: surfaces,
+	}
+}
 
-// Endpoint base SKUs.
-const (
-	BundleCore     = "core"
-	BundleControl  = "control"
-	BundleComplete = "complete"
-)
+// NewThreatDetectionForDataStoresBundleInput creates a [LicenseBundleInput] for the Threat Detection for Data Stores
+// bundle with the specified total endpoints.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited endpoints.
+func NewThreatDetectionForDataStoresBundleInput(totalEndpoints int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalEndpoints,
+			Count: totalEndpoints,
+		},
+	}
 
-// Cloud Workload Security SKUs — per deployment surface.
-const (
-	BundleCWSServersControl               = "cloud_workload_security_servers_control"
-	BundleCWSServersComplete              = "cloud_workload_security_servers_complete"
-	BundleCWSContainersControl            = "cloud_workload_security_containers_control"
-	BundleCWSContainersComplete           = "cloud_workload_security_containers_complete"
-	BundleCWSServerlessContainersControl  = "cloud_workload_security_serverless_containers_control"
-	BundleCWSServerlessContainersComplete = "cloud_workload_security_serverless_containers_complete"
-)
+	return LicenseBundleInput{
+		Name:     LicenseBundleThreatDetectionDataStores,
+		Surfaces: surfaces,
+	}
+}
 
-// Data and logging SKUs.
-const (
-	BundleSingularityDataLake = "singularity_data_lake"
-	BundleLogAnalytics        = "log_analytics"
-)
+// NewMobileSecurityBundleInput creates a [LicenseBundleInput] for the Mobile Security bundle with the specified
+// total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewMobileSecurityBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
 
-// Identity SKUs.
-const (
-	BundleIdentityThreatProtection = "identity_threat_protection"
-	BundleUnifiedIdentity          = "unified_identity"
-	BundleSingularityIdentity      = "singularity_identity"
-	BundleRangerADProtect          = "ranger_ad_protect"
-)
+	return LicenseBundleInput{
+		Name:     LicenseBundleMobileSecurity,
+		Surfaces: surfaces,
+	}
+}
 
-// Other base service SKUs.
-const (
-	BundleMobile                = "mobile"
-	BundleThreatDetectionS3     = "threat_detection_s3"
-	BundleThreatDetectionNetApp = "threat_detection_netapp"
-)
+// NewLogAnalyticsBundleInput creates a [LicenseBundleInput] for the Log Analytics bundle with the specified average
+// GB/day and long-range query credits.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited average GB/day or long-range query credits.
+//
+// Note that this bundle is deprecated and may not be available in all accounts; check with SentinelOne support
+// before using it.
+func NewLogAnalyticsBundleInput(avgGBPerDay, longRangeQueryCredits int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceAvgGBDay,
+			Count: avgGBPerDay,
+		},
+		{
+			Name:  LicenseSurfaceLongRangeQueryCredits,
+			Count: longRangeQueryCredits,
+		},
+	}
 
-// ---- Surface name constants ----
+	return LicenseBundleInput{
+		Name:     LicenseBundleLogAnalytics,
+		Surfaces: surfaces,
+	}
+}
 
-const (
-	// SurfaceTotalAgents is the surface for endpoint and CWS SKUs.
-	SurfaceTotalAgents = "Total Agents"
+// NewIdentityThreatDetectionBundleInput creates a [LicenseBundleInput] for the Identity Threat Detection bundle with
+// the specified total endpoints.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited endpoints.
+func NewIdentityThreatDetectionBundleInput(totalEndpoints int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalEndpoints,
+			Count: totalEndpoints,
+		},
+	}
 
-	// SurfaceTotalEndpoints is the surface for identity and datastore SKUs.
-	SurfaceTotalEndpoints = "Total Endpoints"
+	return LicenseBundleInput{
+		Name:     LicenseBundleIdentityThreatProtection,
+		Surfaces: surfaces,
+	}
+}
 
-	// SurfaceTotalUsers is the surface for user-based identity SKUs.
-	SurfaceTotalUsers = "Total Users"
+// NewIdentitySecurityPostureManagementBundleInput creates a [LicenseBundleInput] for the Identity Security Posture
+// Management bundle with the specified total endpoints.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited users.
+func NewIdentitySecurityPostureManagementBundleInput(totalUsers int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalUsers,
+			Count: totalUsers,
+		},
+	}
 
-	// SurfaceAverageGBPerDay is the data-volume surface for SDL-style SKUs.
-	SurfaceAverageGBPerDay = "Average GB/Day"
+	return LicenseBundleInput{
+		Name:     LicenseBundleIdentitySecurityPostureManagement,
+		Surfaces: surfaces,
+	}
+}
 
-	// SurfaceLongRangeQueryCredits is the credit-based query surface used
-	// alongside singularity_data_lake and related SKUs.
-	SurfaceLongRangeQueryCredits = "Long-Range Query Credits"
-)
+// NewIdentitySecurityForIDPBundleInput creates a [LicenseBundleInput] for the Identity Security for IDP bundle with
+// the specified total users.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited users.
+func NewIdentitySecurityForIDPBundleInput(totalUsers int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalUsers,
+			Count: totalUsers,
+		},
+	}
 
-// ---- Add-on module (modules[].name) constants ----
+	return LicenseBundleInput{
+		Name:     LicenseBundleIdentitySecurityForIDP,
+		Surfaces: surfaces,
+	}
+}
 
-// Classic endpoint add-ons.
-const (
-	ModuleRSO                  = "rso"
-	ModuleSTAR                 = "star"
-	ModuleBinaryVaultBenign    = "binary_vault_benign"
-	ModuleBinaryVaultMalicious = "binary_vault_malicious"
-	ModuleRanger               = "ranger"
-	ModuleRogues               = "rogues"
-)
+// NewIdentitySecurityBundleInput creates a [LicenseBundleInput] for the Unified Identity bundle with the specified
+// total users.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited users.
+func NewIdentitySecurityBundleInput(totalUsers int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalUsers,
+			Count: totalUsers,
+		},
+	}
 
-// MDR / vigilance / alerts add-ons.
-const (
-	ModuleVigilance              = "vigilance"
-	ModuleWatchtower             = "watchtower"
-	ModuleSingularityMDR         = "singularity_mdr"
-	ModuleSkylightAlerts         = "skylight_alerts"
-	ModuleWayfinderMDREssentials = "wayfinder_mdr_essentials"
-	ModuleWayfinderMDRElite      = "wayfinder_mdr_elite"
-	ModuleWayfinderThreatHunting = "wayfinder_threat_hunting"
-)
+	return LicenseBundleInput{
+		Name:     LicenseBundleUnifiedIdentity,
+		Surfaces: surfaces,
+	}
+}
 
-// Automation / XDR / extended retention add-ons.
-const (
-	ModuleHyperautomation   = "hyperautomation"
-	ModuleXDR1095DRetention = "xdr_1095d_retention"
-	ModuleXDR1460DRetention = "xdr_1460d_retention"
-)
+// NewIdentityDetectionResponseBundleInput creates a [LicenseBundleInput] for the Identity Detection and Response
+// bundle with the specified total endpoints.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited endpoints.
+func NewIdentityDetectionResponseBundleInput(totalEndpoints int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalEndpoints,
+			Count: totalEndpoints,
+		},
+	}
 
-// Setting group names for use in [LicenseSettingInput.GroupName].
-const (
-	SettingGroupMaliciousDataRetention  = "malicious_data_retention"
-	SettingGroupDVRetention             = "dv_retention"
-	SettingGroupRemoteShellAvailability = "remote_shell_availability"
-	SettingGroupMarketplaceAccessStatus = "marketplace_access_status"
-	SettingGroupAccountLevelRanger      = "account_level_ranger"
-)
+	return LicenseBundleInput{
+		Name:     LicenseBundleIdentityDetectionResponse,
+		Surfaces: surfaces,
+	}
+}
 
-// ---- Setting value constants ----
+// NewHyperautomationBundleInput creates a [LicenseBundleInput] for the Hyperautomation bundle with the specified
+// total action packs.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited action packs.
+func NewHyperautomationBundleInput(totalActionPacks int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceActionPacks,
+			Count: totalActionPacks,
+		},
+	}
 
-// Values for [SettingGroupMaliciousDataRetention].
-const (
-	SettingMaliciousRetention365Days = "365 Days"
-)
+	return LicenseBundleInput{
+		Name:     LicenseBundleHyperautomation,
+		Surfaces: surfaces,
+	}
+}
 
-// Values for [SettingGroupDVRetention].
-const (
-	SettingDVRetention4Days   = "4 Days"
-	SettingDVRetention30Days  = "30 Days"
-	SettingDVRetention90Days  = "90 Days"
-	SettingDVRetention180Days = "180 Days"
-	SettingDVRetention365Days = "365 Days"
-)
+// NewEndpointSecurityCoreBundleInput creates a [LicenseBundleInput] for the Endpoint Security Core bundle with
+// the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewEndpointSecurityCoreBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
 
-// Values for [SettingGroupRemoteShellAvailability].
-const (
-	SettingRemoteShellEnabled  = "Enabled"
-	SettingRemoteShellDisabled = "Disabled"
-)
+	return LicenseBundleInput{
+		Name:     LicenseBundleEndpointSecurityCore,
+		Surfaces: surfaces,
+	}
+}
 
-// Values for [SettingGroupMarketplaceAccessStatus].
-const (
-	SettingMarketplaceAvailable = "Available"
-	SettingMarketplaceNoAccess  = "No Access"
-)
+// NewEndpointSecurityCompleteBundleInput creates a [LicenseBundleInput] for the Endpoint Security Complete bundle
+// with the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewEndpointSecurityCompleteBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
 
-// Values for [SettingGroupAccountLevelRanger].
-const (
-	SettingRangerLevelAccount = "Account"
-	SettingRangerLevelSite    = "Site"
-)
+	return LicenseBundleInput{
+		Name:     LicenseBundleEndpointSecurityComplete,
+		Surfaces: surfaces,
+	}
+}
+
+// NewEndpointSecurityControlBundleInput creates a [LicenseBundleInput] for the Endpoint Security Control bundle
+// with the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewEndpointSecurityControlBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleEndpointSecurityControl,
+		Surfaces: surfaces,
+	}
+}
+
+// NewDataIngestBundleInput creates a [LicenseBundleInput] for the Data Ingest bundle with the specified average
+// GB/day and long-range query credits.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited average GB/day or long-range query credits.
+func NewDataIngestBundleInput(avgGBPerDay, longRangeQueryCredits int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceAvgGBDay,
+			Count: avgGBPerDay,
+		},
+		{
+			Name:  LicenseSurfaceLongRangeQueryCredits,
+			Count: longRangeQueryCredits,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleDataIngest,
+		Surfaces: surfaces,
+	}
+}
+
+// NewCWSForServersControlBundleInput creates a [LicenseBundleInput] for the Cloud Workload Security for
+// Servers Control bundle with the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewCWSForServersControlBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleCWSForServersControl,
+		Surfaces: surfaces,
+	}
+}
+
+// NewCWSForServersCompleteBundleInput creates a [LicenseBundleInput] for the Cloud Workload Security for
+// Servers Complete bundle with the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewCWSForServersCompleteBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleCWSForServersComplete,
+		Surfaces: surfaces,
+	}
+}
+
+// NewCWSForServerlessContainersControlBundleInput creates a [LicenseBundleInput] for the Cloud Workload Security for
+// Serverless Containers Control bundle with the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewCWSForServerlessContainersControlBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleCWSForServerlessContainersControl,
+		Surfaces: surfaces,
+	}
+}
+
+// NewCWSForServerlessContainersCompleteBundleInput creates a [LicenseBundleInput] for the Cloud Workload Security for
+// Serverless Containers Complete bundle with the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewCWSForServerlessContainersCompleteBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleCWSForServerlessContainersComplete,
+		Surfaces: surfaces,
+	}
+}
+
+// NewCWSForContainersControlBundleInput creates a [LicenseBundleInput] for the Cloud Workload Security for
+// Containers Control bundle with the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewCWSForContainersControlBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleCWSForContainersControl,
+		Surfaces: surfaces,
+	}
+}
+
+// NewCWSForContainersCompleteBundleInput creates a [LicenseBundleInput] for the Cloud Workload Security for
+// Containers Complete bundle with the specified total agents.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited agents.
+func NewCWSForContainersCompleteBundleInput(totalAgents int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceTotalAgents,
+			Count: totalAgents,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleCWSForContainersComplete,
+		Surfaces: surfaces,
+	}
+}
+
+// NewCNSProBundleInput creates a [LicenseBundleInput] for the Cloud Native Security Pro bundle with the specified
+// total workloads.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited workloads.
+func NewCNSProBundleInput(totalWorkloads int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceWorkloads,
+			Count: totalWorkloads,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleCNSPro,
+		Surfaces: surfaces,
+	}
+}
+
+// NewCNSFoundationsBundleInput creates a [LicenseBundleInput] for the Cloud Native Security Foundations bundle with
+// the specified total workloads.
+//
+// Use [LicenseSurfaceUnlimitedCount] for unlimited workloads.
+func NewCNSFoundationsBundleInput(totalWorkloads int) LicenseBundleInput {
+	surfaces := []LicenseSurfaceInput{
+		{
+			Name:  LicenseSurfaceWorkloads,
+			Count: totalWorkloads,
+		},
+	}
+
+	return LicenseBundleInput{
+		Name:     LicenseBundleCNSFoundations,
+		Surfaces: surfaces,
+	}
+}
+
+// NewDataIngest30dModuleItem creates a [LicenseModuleItem] for the 30-day Data Ingest module add-on.
+func NewDataIngest30dModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngest30d}
+}
+
+// NewDataIngest90dModuleItem creates a [LicenseModuleItem] for the 90-day Data Ingest module add-on.
+func NewDataIngest90dModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngest90d}
+}
+
+// NewDataIngest180dModuleItem creates a [LicenseModuleItem] for the 180-day Data Ingest module add-on.
+func NewDataIngest180dModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngest180d}
+}
+
+// NewDataIngest365dModuleItem creates a [LicenseModuleItem] for the 365-day Data Ingest module add-on.
+func NewDataIngest365dModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngest365d}
+}
+
+// NewDataIngestLongRangeRetention1yModuleItem creates a [LicenseModuleItem] for the 1-year Data Ingest Long
+// Range Retention module add-on.
+func NewDataIngestLongRangeRetention1yModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngestLongRangeRetention1y}
+}
+
+// NewDataIngestLongRangeRetention2yModuleItem creates a [LicenseModuleItem] for the 2-year Data Ingest Long
+// Range Retention module add-on.
+func NewDataIngestLongRangeRetention2yModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngestLongRangeRetention2y}
+}
+
+// NewDataIngestLongRangeRetention3yModuleItem creates a [LicenseModuleItem] for the 3-year Data Ingest Long
+// Range Retention module add-on.
+func NewDataIngestLongRangeRetention3yModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngestLongRangeRetention3y}
+}
+
+// NewDataIngestLongRangeRetention4yModuleItem creates a [LicenseModuleItem] for the 4-year Data Ingest Long
+// Range Retention module add-on.
+func NewDataIngestLongRangeRetention4yModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngestLongRangeRetention4y}
+}
+
+// NewDataIngestLongRangeRetention5yModuleItem creates a [LicenseModuleItem] for the 5-year Data Ingest Long
+// Range Retention module add-on.
+func NewDataIngestLongRangeRetention5yModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngestLongRangeRetention5y}
+}
+
+// NewCloudFunnelModuleItem creates a [LicenseModuleItem] for the Cloud Funnel module add-on.
+func NewCloudFunnelModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleCloudFunnel}
+}
+
+// NewVigilanceMDRModuleItem creates a [LicenseModuleItem] for the Vigilance MDR module add-on.
+func NewVigilanceMDRModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleVigilanceMDR}
+}
+
+// NewBinaryVaultBenignFilesModuleItem creates a [LicenseModuleItem] for the Binary Vault Benign Files module add-on.
+func NewBinaryVaultBenignFilesModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleBinaryVaultBenignFiles}
+}
+
+// NewDataIngestLongRangeEndpointAndCWSModuleItem creates a [LicenseModuleItem] for the Data Ingest Long Range
+// Endpoint and CWS module add-on.
+func NewDataIngestLongRangeEndpointAndCWSModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleDataIngestLongRangeEndpointAndCWS}
+}
+
+// NewNetworkDiscoveryModuleItem creates a [LicenseModuleItem] for the Network Discovery module add-on.
+func NewNetworkDiscoveryModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleNetworkDiscovery}
+}
+
+// NewSingularityMDRModuleItem creates a [LicenseModuleItem] for the Singularity MDR module add-on.
+func NewSingularityMDRModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleSingularityMDR}
+}
+
+// NewThreatIntelModuleItem creates a [LicenseModuleItem] for the Threat Intel module add-on.
+func NewThreatIntelModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleThreatIntel}
+}
+
+// NewPurpleAIFoundationsModuleItem creates a [LicenseModuleItem] for the Purple AI Foundations module add-on.
+func NewPurpleAIFoundationsModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModulePurpleAIFoundations}
+}
+
+// NewPurpleAISocAnalystModuleItem creates a [LicenseModuleItem] for the Purple AI SOC Analyst module add-on.
+func NewPurpleAISocAnalystModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModulePurpleAISocAnalyst}
+}
+
+// NewWatchTowerModuleItem creates a [LicenseModuleItem] for the WatchTower module add-on.
+func NewWatchTowerModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleWatchTower}
+}
+
+// NewVulnerabilityManagementModuleItem creates a [LicenseModuleItem] for the Vulnerability Management module add-on.
+func NewVulnerabilityManagementModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleVulnerabilityManagement}
+}
+
+// NewUnprotectedEndpointDiscoveryModuleItem creates a [LicenseModuleItem] for the Unprotected Endpoint Discovery
+// module add-on.
+func NewUnprotectedEndpointDiscoveryModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleUnprotectedEndpointDiscovery}
+}
+
+// NewRemoteScriptOrchestrationModuleItem creates a [LicenseModuleItem] for the Remote Script Orchestration module
+// add-on.
+func NewRemoteScriptOrchestrationModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleRemoteScriptOrchestration}
+}
+
+// NewWayfinderEliteModuleItem creates a [LicenseModuleItem] for the Wayfinder Elite module add-on.
+func NewWayfinderEliteModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleWayfinderElite}
+}
+
+// NewWayfinderEssentialsModuleItem creates a [LicenseModuleItem] for the Wayfinder Essentials module add-on.
+func NewWayfinderEssentialsModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleWayfinderEssentials}
+}
+
+// NewWayfinderThreatHuntingModuleItem creates a [LicenseModuleItem] for the Wayfinder Threat Hunting module add-on.
+func NewWayfinderThreatHuntingModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleWayfinderThreatHunting}
+}
+
+// NewRemoteOpsForensicsModuleItem creates a [LicenseModuleItem] for the Remote Ops Forensics module add-on.
+func NewRemoteOpsForensicsModuleItem() LicenseModuleItem {
+	return LicenseModuleItem{Name: LicenseModuleRemoteOpsForensics}
+}
+
+// NewXDRDataRetentionSettingInput sets the XDR data retention license setting based on the specified number of days.
+//
+// Technically only certain discrete values are valid for the API (e.g. 14, 30, 90, 180, 365), but the function
+// accepts any positive integer and maps it to the nearest valid maximum value. For example, a value of 45 would map
+// to "90 Days", while a value of 400 would map to "365 Days".  Values less than 30 map to "14 Days".
+func NewXDRDataRetentionSettingInput(days int) LicenseSettingInput {
+	var setting string
+
+	switch {
+	case days >= 365: //nolint:mnd
+		setting = "365 Days"
+	case days >= 180: //nolint:mnd
+		setting = "180 Days"
+	case days >= 90: //nolint:mnd
+		setting = "90 Days"
+	case days >= 30: //nolint:mnd
+		setting = "30 Days"
+	default:
+		setting = "14 Days"
+	}
+
+	return LicenseSettingInput{
+		GroupName: LicenseSettingXDRDataRetention,
+		Setting:   setting,
+	}
+}
+
+// NewEDRDataRetentionSettingInput sets the EDR data retention license setting.
+//
+// This value is **always** set to 365 days.
+func NewEDRDataRetentionSettingInput() LicenseSettingInput {
+	return LicenseSettingInput{
+		GroupName: LicenseSettingEDRDataRetention,
+		Setting:   "365 Days",
+	}
+}
+
+// NewRemoteShellSettingInput sets the Remote Shell license setting based on whether the feature should be enabled
+// or not.
+func NewRemoteShellSettingInput(enabled bool) LicenseSettingInput {
+	var setting string
+	if enabled {
+		setting = "Enabled"
+	} else {
+		setting = "Disabled"
+	}
+
+	return LicenseSettingInput{
+		GroupName: LicenseSettingRemoteShell,
+		Setting:   setting,
+	}
+}
+
+// NewMarketplaceAccessSettingInput sets the Marketplace Access license setting based on whether the feature should
+// be enabled or not.
+func NewMarketplaceAccessSettingInput(enabled bool) LicenseSettingInput {
+	var setting string
+	if enabled {
+		setting = "Enabled"
+	} else {
+		setting = "No Access"
+	}
+
+	return LicenseSettingInput{
+		GroupName: LicenseSettingMarketplaceAccess,
+		Setting:   setting,
+	}
+}
+
+// NewNetworkDiscoveryConsolidationLevelSettingInput sets the Network Discovery Consolidation Level license setting
+// based on the specified level, which must be [LicenseSettingNetworkDiscoveryConsolidationLevelAccount] or
+// [LicenseSettingNetworkDiscoveryConsolidationLevelSite].
+//
+// If the given level is invalid, the function defaults to [LicenseSettingNetworkDiscoveryConsolidationLevelAccount].
+func NewNetworkDiscoveryConsolidationLevelSettingInput(level string) LicenseSettingInput {
+	var setting string
+
+	switch strings.ToLower(level) {
+	case "site":
+		setting = LicenseSettingNetworkDiscoveryConsolidationLevelSite
+	default:
+		setting = LicenseSettingNetworkDiscoveryConsolidationLevelAccount
+	}
+
+	return LicenseSettingInput{
+		GroupName: LicenseSettingNetworkDiscoveryConsolidationLevel,
+		Setting:   setting,
+	}
+}
+
+// NewIdentitySecurityPostureModeSettingInput sets the Identity Security Posture Mode license setting based on the
+// specified mode, which must be [LicenseSettingIdentitySecurityPostureModeFull] or
+// [LicenseSettingIdentitySecurityPostureModeLite].
+//
+// If the given mode is invalid, the function defaults to [LicenseSettingIdentitySecurityPostureModeFull].
+func NewIdentitySecurityPostureModeSettingInput(mode string) LicenseSettingInput {
+	var setting string
+
+	switch strings.ToLower(mode) {
+	case "lite":
+		setting = LicenseSettingIdentitySecurityPostureModeLite
+	default:
+		setting = LicenseSettingIdentitySecurityPostureModeFull
+	}
+
+	return LicenseSettingInput{
+		GroupName: LicenseSettingIdentitySecurityPostureMode,
+		Setting:   setting,
+	}
+}

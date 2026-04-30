@@ -237,7 +237,7 @@
 // List all active accounts, then update the name of the first one found:
 //
 //	accounts, _, err := client.Accounts.List(ctx, &sentinelone.ListAccountsParams{
-//	    State: "active",
+//	    State: sentinelone.StateActive,
 //	})
 //	if err != nil {
 //	    log.Fatal(err)
@@ -268,7 +268,7 @@
 //
 //	resp, _, err := client.Sites.List(ctx, &sentinelone.ListSitesParams{
 //	    AccountID: "225494730938493804",
-//	    State:     "active",
+//	    State:     sentinelone.StateActive,
 //	})
 //	if err != nil {
 //	    log.Fatal(err)
@@ -283,7 +283,7 @@
 //	    Data: sentinelone.CreateSiteData{
 //	        Name:      "Production East",
 //	        AccountID: "225494730938493804",
-//	        SiteType:  "Paid",
+//	        SiteType:  sentinelone.SiteTypePaid,
 //	        SKU:       "complete",
 //	    },
 //	})
@@ -373,42 +373,32 @@
 //
 // # Licenses
 //
-// The SDK models the full license configuration block as typed structs with
-// named constants for every known SKU, surface, module, and setting value.
+// The SDK provides helper constructor functions for every known bundle SKU,
+// add-on module, and license setting.  Use these instead of constructing
+// [LicensesInput] manually.
 //
 // Replace the license set on an account (leaves all other fields unchanged):
 //
 //	_, err = client.Accounts.UpdateLicenses(ctx, accountID, sentinelone.LicensesInput{
 //	    Bundles: []sentinelone.LicenseBundleInput{
-//	        {
-//	            Name: sentinelone.BundleComplete,
-//	            Surfaces: []sentinelone.LicenseSurfaceInput{
-//	                {Name: sentinelone.SurfaceTotalAgents, Count: 500},
-//	            },
-//	            Modules: []sentinelone.LicenseModuleItem{
-//	                {Name: sentinelone.ModuleRanger},
-//	                {Name: sentinelone.ModuleSTAR},
-//	            },
-//	            Settings: []sentinelone.LicenseSettingInput{
-//	                {
-//	                    GroupName: sentinelone.SettingGroupDVRetention,
-//	                    Setting:   sentinelone.SettingDVRetention90Days,
-//	                },
-//	            },
-//	        },
+//	        sentinelone.NewEndpointSecurityCompleteBundleInput(500),
+//	    },
+//	    Modules: []sentinelone.LicenseModuleItem{
+//	        sentinelone.NewNetworkDiscoveryModuleItem(),
+//	        sentinelone.NewWatchTowerModuleItem(),
+//	    },
+//	    Settings: []sentinelone.LicenseSettingInput{
+//	        sentinelone.NewXDRDataRetentionSettingInput(90),
+//	        sentinelone.NewNetworkDiscoveryConsolidationLevelSettingInput(
+//				sentinelone.LicenseSettingNetworkDiscoveryConsolidationLevelAccount),
 //	    },
 //	})
 //
-// Replace the license set on a site; use [SurfaceUnlimitedCount] for unlimited:
+// Replace the license set on a site; use [LicenseSurfaceUnlimitedCount] for unlimited:
 //
 //	_, err = client.Sites.UpdateLicenses(ctx, siteID, sentinelone.LicensesInput{
 //	    Bundles: []sentinelone.LicenseBundleInput{
-//	        {
-//	            Name: sentinelone.BundleControl,
-//	            Surfaces: []sentinelone.LicenseSurfaceInput{
-//	                {Name: sentinelone.SurfaceTotalAgents, Count: sentinelone.SurfaceUnlimitedCount},
-//	            },
-//	        },
+//	        sentinelone.NewEndpointSecurityCompleteBundleInput(sentinelone.LicenseSurfaceUnlimitedCount),
 //	    },
 //	})
 //
@@ -418,18 +408,15 @@
 //	account, err := client.Accounts.Create(ctx, sentinelone.CreateAccountRequest{
 //	    Data: sentinelone.CreateAccountData{
 //	        Name:        "Acme Corp",
-//	        AccountType: "Paid",
+//	        AccountType: sentinelone.AccountTypePaid,
 //	        Licenses: &sentinelone.LicensesInput{
 //	            Bundles: []sentinelone.LicenseBundleInput{
-//	                {
-//	                    Name: sentinelone.BundleComplete,
-//	                    Surfaces: []sentinelone.LicenseSurfaceInput{
-//	                        {Name: sentinelone.SurfaceTotalAgents, Count: 1000},
-//	                    },
-//	                    Modules: []sentinelone.LicenseModuleItem{
-//	                        {Name: sentinelone.ModuleBinaryVaultMalicious},
-//	                    },
-//	                },
+//	                sentinelone.NewEndpointSecurityCompleteBundleInput(1000),
+//	                sentinelone.NewDataIngestBundleInput(50, 0),
+//	            },
+//	            Modules: []sentinelone.LicenseModuleItem{
+//	                sentinelone.NewNetworkDiscoveryModuleItem(),
+//	                sentinelone.NewBinaryVaultBenignFilesModuleItem(),
 //	            },
 //	        },
 //	    },
@@ -440,11 +427,11 @@
 //	affected, err := client.Licenses.UpdateSitesModules(ctx, sentinelone.UpdateSitesModulesRequest{
 //	    Data: sentinelone.UpdateSitesModulesData{
 //	        Operation: "add",
-//	        Modules:   []sentinelone.LicenseModuleItem{{Name: sentinelone.ModuleRanger}},
+//	        Modules:   []sentinelone.LicenseModuleItem{sentinelone.NewNetworkDiscoveryModuleItem()},
 //	    },
 //	    Filter: sentinelone.UpdateSitesModulesFilter{
 //	        AccountIDs: []string{"225494730938493804"},
-//	        State:      "active",
+//	        State:      sentinelone.StateActive,
 //	    },
 //	})
 //

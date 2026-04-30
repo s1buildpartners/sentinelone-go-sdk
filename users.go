@@ -18,7 +18,6 @@ type UsersClient struct{ c *Client }
 // filtered by the optional params.
 //
 // API: GET /web/api/v2.1/users
-// Required permission: Users.view
 //
 // Pass nil for params to use the API defaults (limit 10, no filters).
 func (u *UsersClient) List(ctx context.Context, params *ListUsersParams) ([]types.User, *types.Pagination, error) {
@@ -40,7 +39,6 @@ func (u *UsersClient) List(ctx context.Context, params *ListUsersParams) ([]type
 // Get returns the user with the given userID.
 //
 // API: GET /web/api/v2.1/users/{user_id}
-// Required permission: Users.view
 func (u *UsersClient) Get(ctx context.Context, userID string) (*types.User, error) {
 	var user types.User
 
@@ -55,7 +53,6 @@ func (u *UsersClient) Get(ctx context.Context, userID string) (*types.User, erro
 // Create creates a new user account.
 //
 // API: POST /web/api/v2.1/users
-// Required permission: Users.create
 //
 // Email, FullName, and Scope are required.  Scope must be one of "site",
 // "account", or "tenant".  Assign roles via ScopeRoles (preferred) or the
@@ -76,7 +73,6 @@ func (u *UsersClient) Create(ctx context.Context, req CreateUserRequest) (*types
 // Update updates mutable fields on an existing user.
 //
 // API: PUT /web/api/v2.1/users/{user_id}
-// Required permission: Users.update
 //
 // Scope is required in req.Data.  Only non-zero fields are applied.  To
 // change a password, set both CurrentPassword and Password.  Role assignments
@@ -95,7 +91,6 @@ func (u *UsersClient) Update(ctx context.Context, userID string, req UpdateUserR
 // Delete permanently deletes the user with the given userID.
 //
 // API: DELETE /web/api/v2.1/users/{user_id}
-// Required permission: Users.delete
 func (u *UsersClient) Delete(ctx context.Context, userID string) error {
 	_, err := u.c.delete(ctx, "/users/"+userID, nil)
 
@@ -108,7 +103,6 @@ func (u *UsersClient) Delete(ctx context.Context, userID string) error {
 // calling.
 //
 // API: POST /web/api/v2.1/users/delete-users
-// Required permission: Users.delete
 func (u *UsersClient) BulkDelete(ctx context.Context, req BulkUsersActionRequest) error {
 	_, err := u.c.post(ctx, "/users/delete-users", req, nil)
 
@@ -121,7 +115,6 @@ func (u *UsersClient) BulkDelete(ctx context.Context, req BulkUsersActionRequest
 // token belonging to the specified user.  It does not return the token value.
 //
 // API: GET /web/api/v2.1/users/{user_id}/api-token-details
-// Required permission: Users.view
 func (u *UsersClient) GetAPITokenDetails(ctx context.Context, userID string) (*types.APITokenDetail, error) {
 	var detail types.APITokenDetail
 
@@ -137,7 +130,6 @@ func (u *UsersClient) GetAPITokenDetails(ctx context.Context, userID string) (*t
 // API token supplied as a string.  Useful for validating a token before use.
 //
 // API: POST /web/api/v2.1/users/api-token-details
-// Required permission: Users.view
 func (u *UsersClient) GetAPITokenDetailsByToken(
 	ctx context.Context,
 	req GetAPITokenDetailsRequest,
@@ -157,7 +149,6 @@ func (u *UsersClient) GetAPITokenDetailsByToken(
 // response and cannot be retrieved again; store it securely.
 //
 // API: POST /web/api/v2.1/users/generate-api-token
-// Required permission: (self — no special permission beyond being logged in)
 func (u *UsersClient) GenerateAPIToken(
 	ctx context.Context,
 	req GenerateAPITokenRequest,
@@ -177,7 +168,6 @@ func (u *UsersClient) GenerateAPIToken(
 // API calls again.
 //
 // API: POST /web/api/v2.1/users/revoke-api-token
-// Required permission: Users.revokeApiToken
 func (u *UsersClient) RevokeAPIToken(ctx context.Context, req UserIDRequest) error {
 	_, err := u.c.post(ctx, "/users/revoke-api-token", req, nil)
 
@@ -191,7 +181,6 @@ func (u *UsersClient) RevokeAPIToken(ctx context.Context, req UserIDRequest) err
 // enrollment via [UsersClient.Enroll2FA].
 //
 // API: POST /web/api/v2.1/users/2fa/enable
-// Required permission: Users.twoFa
 func (u *UsersClient) Enable2FA(ctx context.Context, req UserIDRequest) error {
 	_, err := u.c.post(ctx, "/users/2fa/enable", req, nil)
 
@@ -202,7 +191,6 @@ func (u *UsersClient) Enable2FA(ctx context.Context, req UserIDRequest) error {
 // identified by req.Data.UserID.
 //
 // API: POST /web/api/v2.1/users/2fa/disable
-// Required permission: Users.twoFa
 func (u *UsersClient) Disable2FA(ctx context.Context, req UserIDRequest) error {
 	_, err := u.c.post(ctx, "/users/2fa/disable", req, nil)
 
@@ -214,7 +202,6 @@ func (u *UsersClient) Disable2FA(ctx context.Context, req UserIDRequest) error {
 // with an authenticator app.
 //
 // API: POST /web/api/v2.1/users/enroll-2fa
-// Required permission: Users.twoFa
 func (u *UsersClient) Enroll2FA(ctx context.Context, req UserIDsRequest) (*types.EnrollTFAResponse, error) {
 	var resp types.EnrollTFAResponse
 
@@ -230,7 +217,6 @@ func (u *UsersClient) Enroll2FA(ctx context.Context, req UserIDsRequest) (*types
 // their next login.  Use this when a user loses access to their authenticator.
 //
 // API: POST /web/api/v2.1/users/reset-2fa
-// Required permission: Users.twoFa
 func (u *UsersClient) Reset2FA(ctx context.Context, req ResetTFARequest) error {
 	_, err := u.c.post(ctx, "/users/reset-2fa", req, nil)
 
@@ -241,7 +227,6 @@ func (u *UsersClient) Reset2FA(ctx context.Context, req ResetTFARequest) error {
 // device.  After this call, 2FA is no longer configured for the user.
 //
 // API: POST /web/api/v2.1/users/delete-2fa
-// Required permission: Users.twoFa
 func (u *UsersClient) Delete2FA(ctx context.Context, req DeleteTFARequest) error {
 	_, err := u.c.post(ctx, "/users/delete-2fa", req, nil)
 
@@ -255,7 +240,6 @@ func (u *UsersClient) Delete2FA(ctx context.Context, req DeleteTFARequest) error
 // must also be provided.
 //
 // API: POST /web/api/v2.1/users/change-password
-// Required permission: (self — no special permission beyond being logged in)
 func (u *UsersClient) ChangePassword(ctx context.Context, req ChangePasswordRequest) error {
 	_, err := u.c.post(ctx, "/users/change-password", req, nil)
 
@@ -267,7 +251,6 @@ func (u *UsersClient) ChangePassword(ctx context.Context, req ChangePasswordRequ
 // to target a single user.
 //
 // API: POST /web/api/v2.1/users/login/send-reset-password-email
-// Required permission: Users.resetPassword
 func (u *UsersClient) SendResetPasswordEmail(ctx context.Context, req SendResetPasswordRequest) error {
 	_, err := u.c.post(ctx, "/users/login/send-reset-password-email", req, nil)
 
@@ -278,7 +261,6 @@ func (u *UsersClient) SendResetPasswordEmail(ctx context.Context, req SendResetP
 // are required to choose a new password at their next login attempt.
 //
 // API: POST /web/api/v2.1/users/login/force-reset-password-on-login
-// Required permission: Users.resetPassword
 func (u *UsersClient) ForceResetPasswordOnLogin(ctx context.Context, req ForceResetPasswordRequest) error {
 	_, err := u.c.post(ctx, "/users/login/force-reset-password-on-login", req, nil)
 
@@ -291,7 +273,6 @@ func (u *UsersClient) ForceResetPasswordOnLogin(ctx context.Context, req ForceRe
 // Set req.Data.Enable to true to enable the app, false to disable it.
 //
 // API: POST /web/api/v2.1/users/enable-app
-// Required permission: Users.enableApp
 func (u *UsersClient) EnableApp(ctx context.Context, req EnableAppRequest) error {
 	_, err := u.c.post(ctx, "/users/enable-app", req, nil)
 
@@ -302,7 +283,6 @@ func (u *UsersClient) EnableApp(ctx context.Context, req EnableAppRequest) error
 // application.  The response URL redirects to the app's access-request flow.
 //
 // API: POST /web/api/v2.1/users/request-app
-// Required permission: (self — no special permission beyond being logged in)
 func (u *UsersClient) RequestApp(ctx context.Context, req RequestAppRequest) (*types.RequestAppResponse, error) {
 	var resp types.RequestAppResponse
 
@@ -319,7 +299,6 @@ func (u *UsersClient) RequestApp(ctx context.Context, req RequestAppRequest) (*t
 // site by setting req.Data.AccountID or req.Data.SiteID.
 //
 // API: POST /web/api/v2.1/users/generate-iframe-token
-// Required permission: Users.generateIframeToken
 func (u *UsersClient) GenerateIFrameToken(
 	ctx context.Context,
 	req IFrameUserRequest,
@@ -477,7 +456,6 @@ func (u *UsersClient) Logout(ctx context.Context) error {
 // this before sensitive operations that require step-up authentication.
 //
 // API: POST /web/api/v2.1/users/auth/elevate
-// Required permission: (self — no special permission beyond being logged in)
 func (u *UsersClient) ElevateSession(
 	ctx context.Context,
 	req ElevateSessionRequest,
@@ -630,7 +608,6 @@ func (u *UsersClient) OnboardingValidateToken(ctx context.Context, token string)
 // lost their original invitation email.
 //
 // API: POST /web/api/v2.1/users/onboarding/send-verification-email
-// Required permission: Users.create
 func (u *UsersClient) OnboardingSendVerificationEmail(ctx context.Context, req SendVerificationEmailRequest) error {
 	_, err := u.c.post(ctx, "/users/onboarding/send-verification-email", req, nil)
 

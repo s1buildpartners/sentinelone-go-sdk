@@ -6,6 +6,12 @@ import (
 	"github.com/s1buildpartners/sentinelone-go-sdk/types"
 )
 
+// SiteTypeTrial and SiteTypePaid are the valid values for SiteType fields.
+const (
+	SiteTypeTrial = "Trial"
+	SiteTypePaid  = "Paid"
+)
+
 // CreateSiteRequest is the request body for POST /sites.
 type CreateSiteRequest struct {
 	Data CreateSiteData `json:"data"`
@@ -99,8 +105,8 @@ type UpdateLocalAuthorizationRequest struct {
 //   - SiteIDs: limit results to specific site IDs (max 500).
 //   - AccountIDs: limit results to sites in these accounts (max 500).
 //   - Query: full-text search on name, account name, and description.
-//   - State: "active", "expired", or "deleted".
-//   - SiteType: "Trial" or "Paid".
+//   - State: [StateActive], [StateExpired], or [StateDeleted].
+//   - SiteType: [SiteTypeTrial] or [SiteTypePaid].
 //   - SKU / Module: filter by product SKU or module identifier.
 //   - RegistrationToken: find the site that owns this registration token.
 //   - AvailableMoveSites: when true, only return sites the caller can move agents to.
@@ -114,8 +120,8 @@ type ListSitesParams struct {
 	Name                string
 	IsDefault           *bool
 	HealthStatus        *bool
-	SiteType            string // Trial, Paid
-	State               string // active, expired, deleted
+	SiteType            string // [SiteTypeTrial], [SiteTypePaid]
+	State               string // [StateActive], [StateExpired], [StateDeleted]
 	States              []string
 	StatesNin           []string
 	Features            []string
