@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-04-30
+
+### Added
+
+- CodeQL analysis workflow (`.github/workflows/codeql.yml`) — runs on push and
+  pull requests to `main` and on a weekly schedule; covers Go source with the
+  CodeQL security and quality query suite.
+
+### Fixed
+
+- `LicenseBundleDataIngest` constant: corrected API value from `"data_ingest"`
+  to `"singularity_data_lake"`.
+- `NewMarketplaceAccessSettingInput`: corrected the enabled-state API value from
+  `"Enabled"` to `"Available"`.
+- `NewXDRDataRetentionSettingInput`: corrected boundary conditions in the
+  day-to-setting mapping.  The previous `>=` comparisons caused values at exact
+  thresholds (e.g. 30, 90, 180) to map to the wrong tier; the corrected `>`
+  comparisons match the documented "nearest valid maximum" semantics (e.g. 30
+  days → `"30 Days"`, 31 days → `"90 Days"`).
+- Release workflow: fixed changelog-section extraction step that was using the
+  wrong version variable, and added a step that waits for the CodeQL workflow to
+  complete before creating the GitHub release.
+
 ## [0.2.0] - 2026-04-30
 
 ### Added
@@ -240,6 +263,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `govulncheck` CI job: corrected workflow step configuration that prevented the
   job from running successfully
 
-[Unreleased]: https://github.com/s1buildpartners/sentinelone-go-sdk/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/s1buildpartners/sentinelone-go-sdk/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/s1buildpartners/sentinelone-go-sdk/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/s1buildpartners/sentinelone-go-sdk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/s1buildpartners/sentinelone-go-sdk/releases/tag/v0.1.0

@@ -43,7 +43,7 @@ const (
 	LicenseBundleEndpointSecurityCore               = "core"
 	LicenseBundleEndpointSecurityComplete           = "complete"
 	LicenseBundleEndpointSecurityControl            = "control"
-	LicenseBundleDataIngest                         = "data_ingest"
+	LicenseBundleDataIngest                         = "singularity_data_lake"
 	LicenseBundleCWSForServersControl               = "cloud_workload_security_servers_control"
 	LicenseBundleCWSForServersComplete              = "cloud_workload_security_servers_complete"
 	LicenseBundleCWSForServerlessContainersControl  = "cloud_workload_security_serverless_containers_control"
@@ -813,7 +813,7 @@ func NewRemoteShellSettingInput(enabled bool) LicenseSettingInput {
 func NewMarketplaceAccessSettingInput(enabled bool) LicenseSettingInput {
 	var setting string
 	if enabled {
-		setting = "Enabled"
+		setting = "Available"
 	} else {
 		setting = "No Access"
 	}
